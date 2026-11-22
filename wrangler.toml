@@ -1,0 +1,9 @@
+name = "christmas-tree-studio"
+pages_build_output_dir = "studio/public"
+compatibility_date = "2024-12-01"
+
+# KV：树数据（tree/ btree/ trash/ index stats/total）
+# id 在创建 namespace 后回填（wrangler kv namespace create TREES）
+[[kv_namespaces]]
+binding = "TREES"
+id = "KV_NAMESPACE_ID_PLACEHOLDER"

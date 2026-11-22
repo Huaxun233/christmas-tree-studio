@@ -1,0 +1,15 @@
+node_modules/
+.dev-data/
+studio/public/tree/
+.netlify/
+.wrangler/
+.dev.vars
+.deploy-tmp/
+.DS_Store
+*.log
+dev.err
+
+deploy-api.ps1
+tmp-*.json
+tmp-*.mjs
+dev-cf.*

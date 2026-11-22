@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>我的树</title>
+<style>
+  :root {
+    --bg: #0a1420; --bg2: #0f1e30; --card: #13263c; --line: #24405e;
+    --text: #e8f0fa; --dim: #8fa8c4; --gold: #f5c451; --gold2: #ffe9a8;
+    --green: #3ddc84; --danger: #ff6b7a;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    background: radial-gradient(1200px 800px at 50% -10%, #16304d 0%, var(--bg) 60%);
+    color: var(--text); min-height: 100vh; padding-bottom: 40px;
+  }
+  header {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 14px 18px; border-bottom: 1px solid var(--line);
+    position: sticky; top: 0; background: rgba(10,20,32,.9); backdrop-filter: blur(8px); z-index: 10;
+  }
+  header h1 { font-size: 17px; font-weight: 600; }
+  .gh-link {
+    display: inline-flex; align-items: center; gap: 6px; color: var(--dim); text-decoration: none;
+    font-size: 13px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 999px; transition: .2s;
+  }
+  .gh-link:hover { color: var(--text); border-color: var(--gold); }
+  main { max-width: 820px; margin: 0 auto; padding: 18px 16px; }
+  .empty { text-align: center; padding: 60px 20px; color: var(--dim); font-size: 14px; line-height: 1.9; }
+  .empty .big { font-size: 40px; display: block; margin-bottom: 14px; }
+  .btn {
+    display: inline-block; margin-top: 18px; padding: 12px 22px; border-radius: 12px; text-decoration: none;
+    font-size: 15px; font-weight: 600; color: #201a05;
+    background: linear-gradient(135deg, var(--gold2), var(--gold)); border: none; cursor: pointer;
+  }
+  .list { display: grid; gap: 12px; }
+  .row {
+    display: grid; grid-template-columns: 86px 1fr auto; gap: 14px; align-items: center;
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px;
+    transition: opacity .25s;
+  }
+  .row.trashed { opacity: .55; }
+  .row .pic {
+    width: 86px; height: 86px; border-radius: 10px; overflow: hidden; background: var(--bg2);
+    display: flex; align-items: center; justify-content: center; color: var(--dim); font-size: 22px;
+  }
+  .row .pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .row .meta { min-width: 0; }
+  .row .t { font-size: 15px; font-weight: 600; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row .sub { font-size: 12px; color: var(--dim); }
+  .row .err { font-size: 12px; color: var(--danger); margin-top: 4px; }
+  .row .acts { display: flex; flex-direction: column; gap: 6px; }
+  .mini {
+    padding: 7px 12px; border-radius: 9px; border: 1px solid var(--line); background: var(--bg2);
+    color: var(--text); font-size: 12.5px; cursor: pointer; text-decoration: none; text-align: center; white-space: nowrap;
+  }
+  .mini:disabled { opacity: .5; cursor: wait; }
+  .mini:hover { border-color: var(--gold); color: var(--gold2); }
+  .mini.danger { color: var(--danger); border-color: rgba(255,107,122,.4); }
+  .mini.undo { color: var(--green); border-color: rgba(61,220,132,.5); }
+  .toast {
+    position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px);
+    background: #16283e; border: 1px solid var(--line); color: var(--text); font-size: 13px;
+    padding: 10px 18px; border-radius: 999px; opacity: 0; pointer-events: none; transition: .25s; z-index: 60;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; gap: 10px; }
+  .toolbar .cnt { font-size: 13px; color: var(--dim); }
+</style>
+</head>
+<body>
+<header>
+  <h1>📁 我的树</h1>
+  <a class="gh-link" href="/">🎄 去做一棵</a>
+</header>
+<main>
+  <div class="toolbar" id="toolbar" style="display:none">
+    <span class="cnt" id="cnt"></span>
+    <button class="mini" id="refresh">刷新</button>
+  </div>
+  <div id="content"></div>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+  var content = $("content");
+  var UNDO_MS = 3 * 60 * 1000;
+  var FETCH_MS = 15000;   // 单请求超时：超时算失败，绝不无限转圈
+
+  /* ---- 令牌：URL ?t= 优先，其次 localStorage ---- */
+  function stored() {
+    try { return JSON.parse(localStorage.getItem("studio_my_trees")) || []; } catch (e) { return []; }
+  }
+  var tokens = [];
+  (function collect() {
+    var url = new URL(location.href);
+    var t = url.searchParams.get("t");
+    if (t) {
+      t.split(",").map(function (s) { return s.trim(); }).filter(Boolean).forEach(function (tok) {
+        if (tokens.indexOf(tok) < 0) tokens.push(tok);
+      });
+      var list = stored();
+      tokens.forEach(function (tok) {
+        if (!list.some(function (it) { return it.token === tok; })) {
+          list.push({ id: "", title: "", token: tok, createdAt: 0 });
+        }
+      });
+      try { localStorage.setItem("studio_my_trees", JSON.stringify(list.slice(0, 200))); } catch (e) {}
+    }
+    stored().forEach(function (it) {
+      if (it.token && tokens.indexOf(it.token) < 0) tokens.push(it.token);
+    });
+  })();
+
+  function emptyState() {
+    $("toolbar").style.display = "none";
+    content.innerHTML =
+      "<div class='empty'><span class='big'>🎄</span>" +
+      "这台设备上还没有你做的圣诞树。<br>" +
+      "做一棵，或者用你保存过的<b>管理链接</b>打开本页。" +
+      "<br><a class='btn' href='/'>去制作一棵</a></div>";
+  }
+
+  function fmtTime(ms) {
+    if (!ms) return "";
+    var d = new Date(ms), n = new Date();
+    var sameDay = d.toDateString() === n.toDateString();
+    var p = function (x) { return x < 10 ? "0" + x : "" + x; };
+    return sameDay
+      ? "今天 " + p(d.getHours()) + ":" + p(d.getMinutes())
+      : (d.getMonth() + 1) + "月" + d.getDate() + "日 " + p(d.getHours()) + ":" + p(d.getMinutes());
+  }
+
+  function toast(msg) {
+    var t = $("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toast._t);
+    toast._t = setTimeout(function () { t.classList.remove("show"); }, 2600);
+  }
+
+  /* ---- 带超时的请求：失败立刻返回错误，前端给出重试，不悬死 ---- */
+  function api(token, action, id) {
+    var ctrl = new AbortController();
+    var killer = setTimeout(function () { ctrl.abort(); }, FETCH_MS);
+    return fetch("/api/my", {
+      method: action ? "POST" : "GET",
+      headers: { "content-type": "application/json", "x-owner-token": token },
+      body: action ? JSON.stringify({ action: action, id: id }) : undefined,
+      signal: ctrl.signal,
+      cache: "no-store",
+    }).then(function (res) {
+      return res.json().catch(function () { return {}; }).then(function (data) {
+        return { ok: res.ok, status: res.status, data: data };
+      });
+    }).catch(function (e) {
+      return { ok: false, status: 0, data: { error: (e && e.name === "AbortError") ? "请求超时" : "网络错误" } };
+    }).finally(function () { clearTimeout(killer); });
+  }
+
+  /* ---- 加载列表（一次性渲染；失败显示重试按钮） ---- */
+  var loading = false;
+  function load() {
+    if (loading) return;
+    if (!tokens.length) { emptyState(); return; }
+    loading = true;
+    content.innerHTML = "<div class='empty'>加载中…</div>";
+    Promise.all(tokens.map(function (tk) { return api(tk, null); }))
+      .then(function (results) {
+        loading = false;
+        var all = [], seen = {}, anyNetFail = false;
+        results.forEach(function (r) {
+          if (!r.ok) { if (r.status !== 404) anyNetFail = true; return; }
+          (r.data.trees || []).forEach(function (t) {
+            if (!seen[t.id]) { seen[t.id] = 1; all.push(t); }
+          });
+        });
+        if (!all.length && anyNetFail) return failedState();
+        if (!all.length) return emptyState();
+        all.sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
+        $("toolbar").style.display = "flex";
+        $("cnt").textContent = "共 " + all.length + " 棵";
+        var list = document.createElement("div");
+        list.className = "list";
+        all.forEach(function (t) { list.appendChild(rowFor(t)); });
+        content.innerHTML = "";
+        content.appendChild(list);
+      });
+  }
+
+  function failedState() {
+    $("toolbar").style.display = "none";
+    content.innerHTML =
+      "<div class='empty'><span class='big'>⚠️</span>加载失败，网络不给力。" +
+      "<br><a class='btn' href='javascript:void(0)' id='retry'>重试</a></div>";
+    var r = $("retry");
+    if (r) r.onclick = load;
+  }
+
+  function rowFor(tree) {
+    var row = document.createElement("div");
+    row.className = "row" + (tree.deletedAt ? " trashed" : "");
+    row.dataset.id = tree.id;
+
+    var pic = document.createElement("div");
+    pic.className = "pic";
+    if (tree.thumb) {
+      var img = document.createElement("img");
+      img.src = tree.thumb; img.alt = tree.title || "";
+      pic.appendChild(img);
+    } else { pic.textContent = "🎄"; }
+
+    var meta = document.createElement("div");
+    meta.className = "meta";
+    var t = document.createElement("div");
+    t.className = "t"; t.textContent = tree.title || "（未命名）";
+    var sub = document.createElement("div");
+    sub.className = "sub";
+    sub.textContent = (tree.photoCount || 0) + " 张照片 · " + fmtTime(tree.createdAt) +
+      (tree.deletedAt ? " · 回收站中" : "");
+    meta.appendChild(t); meta.appendChild(sub);
+
+    var acts = document.createElement("div");
+    acts.className = "acts";
+
+    if (tree.deletedAt) {
+      var left = Math.max(0, Math.ceil((tree.deletedAt + UNDO_MS - Date.now()) / 1000));
+      if (left > 0) {
+        var undo = document.createElement("button");
+        undo.className = "mini undo";
+        undo.textContent = "撤销 (" + left + "s)";
+        var iv = setInterval(function () {
+          left = Math.max(0, Math.ceil((tree.deletedAt + UNDO_MS - Date.now()) / 1000));
+          if (left <= 0) { clearInterval(iv); load(); return; }
+          undo.textContent = "撤销 (" + left + "s)";
+        }, 1000);
+        undo.onclick = function () { act(tree.id, "restore", undo, row); };
+        acts.appendChild(undo);
+      } else {
+        setTimeout(load, 300);
+      }
+    } else {
+      var open = document.createElement("a");
+      open.className = "mini";
+      open.href = "/tree/?id=" + encodeURIComponent(tree.id);
+      open.target = "_blank"; open.rel = "noopener"; open.textContent = "打开";
+      var del = document.createElement("button");
+      del.className = "mini danger"; del.textContent = "删除";
+      del.onclick = function () {
+        if (!confirm("删除「" + (tree.title || "这棵树") + "」？\n\n链接会立刻失效，3 分钟内可以撤销。")) return;
+        act(tree.id, "delete", del, row);
+      };
+      acts.appendChild(open); acts.appendChild(del);
+    }
+
+    row.appendChild(pic); row.appendChild(meta); row.appendChild(acts);
+    return row;
+  }
+
+  /* ---- 操作：改行内状态，失败标红 + 重试按钮，绝不整页重载 ---- */
+  function act(id, action, btn, row) {
+    btn.disabled = true;
+    var old = btn.textContent;
+    btn.textContent = action === "delete" ? "删除中…" : "恢复中…";
+    var done = false;
+    var to = setTimeout(function () {
+      if (!done) fail("请求超时");
+    }, FETCH_MS + 2000);
+    function fail(msg) {
+      done = true; clearTimeout(to);
+      btn.disabled = false; btn.textContent = old;
+      if (row.querySelector(".err")) return;
+      var err = document.createElement("div");
+      err.className = "err"; err.textContent = msg + "，点按钮重试";
+      row.querySelector(".meta").appendChild(err);
+    }
+    Promise.all(tokens.map(function (tk) { return api(tk, action, id); }))
+      .then(function (rs) {
+        if (done) return;
+        done = true; clearTimeout(to);
+        var ok = rs.some(function (r) { return r.ok; });
+        if (ok) {
+          toast(action === "delete" ? "已移入回收站，3 分钟内可撤销" : "已恢复");
+          if (action === "delete") {
+            row.classList.add("trashed");
+            var e2 = row.querySelector(".err"); if (e2) e2.remove();
+            btn.textContent = "已删除"; btn.disabled = true; btn.className = "mini";
+            setTimeout(load, 1200);
+          } else {
+            load();
+          }
+        } else {
+          var e = (rs.find(function (r) { return !r.ok; }) || {}).data || {};
+          fail(e.error || "操作失败");
+        }
+      });
+  }
+
+  $("refresh").onclick = load;
+  load();
+})();
+</script>
+</body>
+</html>

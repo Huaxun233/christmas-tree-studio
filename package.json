@@ -1,0 +1,14 @@
+{
+  "name": "christmas-tree-studio",
+  "version": "1.0.0",
+  "private": true,
+  "description": "圣诞树在线定制平台：题字 + 照片 + 一键生成专属树链接（Netlify Blobs）",
+  "scripts": {
+    "build": "node studio/build.js",
+    "dev": "node studio/build.js && npx netlify dev"
+  },
+  "dependencies": {
+    "@netlify/blobs": "^7.4.0"
+  },
+  "license": "MIT"
+}

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>管理已生成的树</title>
+<style>
+  :root { --bg:#07070c; --card:#12121c; --line:#26263a; --text:#ececf3; --dim:#8b8ba3; --gold:#d8b45f; --red:#e05252; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:15px/1.55 -apple-system,"Segoe UI","Microsoft YaHei",sans-serif; }
+  header { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:16px 20px; border-bottom:1px solid var(--line); }
+  header h1 { margin:0; font-size:17px; font-weight:600; }
+  header h1 span { color:var(--gold); }
+  .gh-link { color:var(--dim); text-decoration:none; font-size:13px; border:1px solid var(--line); border-radius:8px; padding:7px 12px; }
+  .gh-link:hover { color:var(--text); border-color:var(--gold); }
+  main { max-width:980px; margin:0 auto; padding:20px; }
+  .gate { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:22px; text-align:center; }
+  .gate input { width:min(320px,100%); padding:11px 13px; border-radius:9px; border:1px solid var(--line); background:#0d0d16; color:var(--text); font-size:15px; }
+  button { cursor:pointer; border:none; border-radius:9px; padding:11px 16px; font-size:14px; font-weight:600; background:var(--gold); color:#1a1408; }
+  button.ghost { background:transparent; color:var(--dim); border:1px solid var(--line); font-weight:500; }
+  button.ghost:hover { color:var(--text); }
+  button.danger { background:transparent; color:var(--red); border:1px solid #4a2020; font-weight:500; }
+  button.danger:hover { background:#2a1111; }
+  .bar { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin:16px 0; color:var(--dim); font-size:13px; }
+  .bar .grow { flex:1; }
+  .list { display:grid; gap:10px; }
+  .row { display:flex; align-items:center; gap:12px; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:10px 12px; }
+  .row img { width:58px; height:58px; object-fit:cover; border-radius:8px; background:#0d0d16; flex:none; }
+  .row .noimg { width:58px; height:58px; border-radius:8px; background:#0d0d16; display:flex; align-items:center; justify-content:center; color:var(--dim); font-size:11px; flex:none; }
+  .row .meta { flex:1; min-width:0; }
+  .row .title { font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .row .sub { color:var(--dim); font-size:12px; margin-top:3px; }
+  .row a.open { color:var(--gold); text-decoration:none; font-size:13px; white-space:nowrap; }
+  .empty { text-align:center; color:var(--dim); padding:40px 0; }
+  #msg { position:fixed; left:50%; bottom:24px; transform:translateX(-50%); background:#1b1b28; border:1px solid var(--line); color:var(--text); padding:10px 18px; border-radius:999px; font-size:13px; opacity:0; transition:.3s; pointer-events:none; }
+  #msg.on { opacity:1; }
+  .stats-card { display:flex; align-items:center; gap:28px; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px 20px; margin-bottom:6px; flex-wrap:wrap; }
+  .stats-big span { font-size:30px; font-weight:700; color:var(--gold); }
+  .stats-big small { display:block; color:var(--dim); font-size:12px; margin-top:2px; }
+  .stats-chart { flex:1; min-width:220px; display:flex; align-items:flex-end; gap:4px; height:64px; }
+  .stats-chart .col { flex:1; background:linear-gradient(180deg,rgba(216,180,95,.85),rgba(216,180,95,.35)); border-radius:3px 3px 0 0; min-height:2px; position:relative; }
+  .stats-chart .col span { position:absolute; top:-16px; left:50%; transform:translateX(-50%); font-size:10px; color:var(--dim); }
+  .stats-chart .col.today { background:linear-gradient(180deg,#ffd98a,rgba(216,180,95,.5)); }
+</style>
+</head>
+<body>
+<header>
+  <h1>🎄 圣诞树工作台 <span>总管理</span></h1>
+  <a class="gh-link" href="/">← 回定制页</a>
+</header>
+<main>
+  <section class="gate" id="gate">
+    <p style="margin:0 0 14px;color:var(--dim)">输入管理密码才能查看和删除已生成的树</p>
+    <input type="password" id="key" placeholder="管理密码" autocomplete="current-password">
+    <div style="margin-top:12px"><button id="enter">进入</button></div>
+  </section>
+
+  <section id="panel" hidden>
+    <div class="stats-card" id="stats-card">
+      <div class="stats-big"><span id="stat-total">–</span><small>总创建数</small></div>
+      <div class="stats-big"><span id="stat-today">–</span><small>今日创建</small></div>
+      <div class="stats-chart" id="stat-chart" title="近 14 天创建数"></div>
+    </div>
+    <div class="bar">
+      <span class="grow" id="stat">加载中…</span>
+      <button class="ghost" id="refresh">刷新</button>
+      <button class="danger" id="clear">清空全部</button>
+    </div>
+    <div class="list" id="list"></div>
+    <div class="empty" id="empty" hidden>还没有生成过任何树</div>
+  </section>
+</main>
+<div id="msg"></div>
+
+<script>
+var KEY = sessionStorage.getItem("studio_admin_key") || "";
+var el = function (id) { return document.getElementById(id); };
+
+function msg(t) {
+  var m = el("msg"); m.textContent = t; m.classList.add("on");
+  clearTimeout(msg._t); msg._t = setTimeout(function () { m.classList.remove("on"); }, 2200);
+}
+function fmtTime(ms) {
+  if (!ms) return "";
+  var d = new Date(ms);
+  var p = function (n) { return String(n).padStart(2, "0"); };
+  return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
+}
+function fmtSize(bytes) {
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + " KB";
+  return (bytes / 1024 / 1024).toFixed(1) + " MB";
+}
+
+function api(query) {
+  var url = "/api/admin" + query + (query.indexOf("?") >= 0 ? "&" : "?") + "k=" + encodeURIComponent(KEY);
+  return fetch(url, { headers: { "x-admin-key": KEY }, cache: "no-store" }).then(function (r) { return r.json(); });
+}
+
+function render(data) {
+  el("stat").textContent = "共 " + data.count + " 棵" + (data.approxBytes ? " · 约 " + fmtSize(data.approxBytes) : "");
+  var list = el("list");
+  list.innerHTML = "";
+  el("empty").hidden = data.count > 0;
+  data.trees.forEach(function (t) {
+    var row = document.createElement("div");
+    row.className = "row";
+    if (t.thumb) {
+      var img = document.createElement("img");
+      img.src = t.thumb; img.alt = "";
+      row.appendChild(img);
+    } else {
+      var ph = document.createElement("div");
+      ph.className = "noimg"; ph.textContent = "无照片";
+      row.appendChild(ph);
+    }
+    var meta = document.createElement("div");
+    meta.className = "meta";
+    var t1 = document.createElement("div");
+    t1.className = "title"; t1.textContent = (t.type === "b" ? "✨ " : "🎄 ") + (t.title || "（无题字）");
+    var t2 = document.createElement("div");
+    t2.className = "sub";
+    t2.textContent = t.id + " · " + (t.photoCount || 0) + " 张照片 · " + fmtTime(t.createdAt)
+      + " · " + (t.ownerTag ? "用户令牌 " + t.ownerTag + "…" : "无令牌（旧数据）")
+      + (t.trash ? " · ⚠️ 回收站中" : "");
+    meta.appendChild(t1); meta.appendChild(t2);
+    row.appendChild(meta);
+
+    var open = document.createElement("a");
+    open.className = "open"; open.href = (t.type === "b" ? "/b/?id=" : "/tree/?id=") + t.id; open.target = "_blank"; open.rel = "noopener";
+    open.textContent = "打开";
+    row.appendChild(open);
+
+    var del = document.createElement("button");
+    del.className = "danger"; del.textContent = "删除";
+    del.onclick = function () {
+      var label = t.title || t.id;
+      if (!confirm("删除「" + label + "」？删掉后那个链接就打不开了。")) return;
+      del.disabled = true;
+      fetch("/api/admin?k=" + encodeURIComponent(KEY), {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-admin-key": KEY },
+        body: JSON.stringify({ action: "delete", id: t.id }),
+      }).then(function (r) { return r.json(); }).then(function (r) {
+        if (r.ok) { msg("已删除"); load(); } else { del.disabled = false; msg(r.error || "删除失败"); }
+      }).catch(function () { del.disabled = false; msg("网络错误"); });
+    };
+    row.appendChild(del);
+
+    var hard = document.createElement("button");
+    hard.className = "danger"; hard.textContent = "硬删"; hard.title = "连同回收站副本一起清掉，不可撤销";
+    hard.onclick = function () {
+      var label = t.title || t.id;
+      if (!confirm("硬删除「" + label + "」？\n\n连回收站副本一起清掉，无法恢复。")) return;
+      hard.disabled = true;
+      fetch("/api/admin?k=" + encodeURIComponent(KEY), {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-admin-key": KEY },
+        body: JSON.stringify({ action: "hard_delete", id: t.id }),
+      }).then(function (r) { return r.json(); }).then(function (r) {
+        if (r.ok) { msg("已硬删除"); load(); } else { hard.disabled = false; msg(r.error || "删除失败"); }
+      }).catch(function () { hard.disabled = false; msg("网络错误"); });
+    };
+    row.appendChild(hard);
+    list.appendChild(row);
+  });
+}
+
+function renderStats(s) {
+  if (!s || typeof s.total !== "number") return;
+  el("stat-total").textContent = s.total;
+  el("stat-today").textContent = s.today;
+  var max = Math.max.apply(null, [1].concat((s.daily || []).map(function (d) { return d.count; })));
+  var chart = el("stat-chart");
+  chart.innerHTML = "";
+  (s.daily || []).forEach(function (d, i) {
+    var col = document.createElement("div");
+    col.className = "col" + (i === s.daily.length - 1 && d.count > 0 ? " today" : "");
+    col.style.height = Math.max(6, Math.round(d.count / max * 100)) + "%";
+    col.title = d.date.slice(5) + "：" + d.count + " 棵";
+    if (d.count > 0) { var n = document.createElement("span"); n.textContent = d.count; col.appendChild(n); }
+    chart.appendChild(col);
+  });
+}
+
+function load() {
+  el("stat").textContent = "加载中…";
+  api("").then(function (r) {
+    if (r.error === "密码错误") { el("panel").hidden = true; el("gate").hidden = false; sessionStorage.removeItem("studio_admin_key"); KEY = ""; msg("密码错误"); return; }
+    if (r.error) { el("stat").textContent = r.error; return; }
+    el("gate").hidden = true; el("panel").hidden = false;
+    render(r);
+  }).catch(function () { el("stat").textContent = "网络错误"; });
+  fetch("/api/stats?k=" + encodeURIComponent(KEY), { headers: { "x-admin-key": KEY }, cache: "no-store" })
+    .then(function (r) { return r.json(); })
+    .then(renderStats)
+    .catch(function () {});
+}
+
+el("enter").onclick = function () {
+  var v = el("key").value.trim();
+  if (!v) return;
+  KEY = v; sessionStorage.setItem("studio_admin_key", v); load();
+};
+el("key").addEventListener("keydown", function (e) { if (e.key === "Enter") el("enter").click(); });
+el("refresh").onclick = load;
+el("clear").onclick = function () {
+  if (!confirm("清空全部？所有已生成的树都会被删掉，无法恢复！")) return;
+  if (!confirm("真的确定？再点一次。")) return;
+  fetch("/api/admin?k=" + encodeURIComponent(KEY), {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-admin-key": KEY },
+    body: JSON.stringify({ action: "clear" }),
+  }).then(function (r) { return r.json(); }).then(function (r) {
+    if (r.ok) { msg("已清空 " + r.deleted + " 棵"); load(); } else { msg(r.error || "清空失败"); }
+  });
+};
+
+if (KEY) { el("panel").hidden = false; el("gate").hidden = true; load(); }
+</script>
+</body>
+</html>

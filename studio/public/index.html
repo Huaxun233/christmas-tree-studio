@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>圣诞树工作台 · 定制你的树</title>
+<style>
+  :root {
+    --bg: #0a1420; --bg2: #0f1e30; --card: #13263c; --line: #24405e;
+    --text: #e8f0fa; --dim: #8fa8c4; --gold: #f5c451; --gold2: #ffe9a8;
+    --green: #3ddc84; --danger: #ff6b7a;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    background: radial-gradient(1200px 800px at 50% -10%, #16304d 0%, var(--bg) 60%);
+    color: var(--text); min-height: 100vh; padding-bottom: 90px;
+  }
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px; border-bottom: 1px solid var(--line);
+    position: sticky; top: 0; background: rgba(10,20,32,.88); backdrop-filter: blur(8px); z-index: 10;
+  }
+  header h1 { font-size: 17px; font-weight: 600; letter-spacing: .04em; }
+  header h1 span { color: var(--gold); }
+  .gh-link {
+    display: inline-flex; align-items: center; gap: 6px; color: var(--dim);
+    text-decoration: none; font-size: 13px; padding: 6px 10px; border: 1px solid var(--line);
+    border-radius: 999px; transition: .2s;
+  }
+  .gh-link:hover { color: var(--text); border-color: var(--gold); }
+  .gh-link svg { width: 16px; height: 16px; fill: currentColor; }
+  main { max-width: 1100px; margin: 0 auto; padding: 20px 16px; display: grid; gap: 18px; }
+  @media (min-width: 900px) { main { grid-template-columns: 1fr 1fr; align-items: start; } }
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px;
+  }
+  .card h2 { font-size: 15px; font-weight: 600; margin-bottom: 12px; color: var(--gold2); }
+  label { display: block; font-size: 13px; color: var(--dim); margin-bottom: 6px; }
+  input[type="text"] {
+    width: 100%; background: var(--bg2); border: 1px solid var(--line); border-radius: 10px;
+    color: var(--text); font-size: 16px; padding: 12px 14px; outline: none; transition: border .2s;
+  }
+  input[type="text"]:focus { border-color: var(--gold); }
+  .hint { font-size: 12px; color: var(--dim); margin-top: 6px; }
+  .blank-opt {
+    display: flex; align-items: center; gap: 7px; margin-top: 8px;
+    font-size: 12.5px; color: var(--dim); cursor: pointer; user-select: none;
+  }
+  .blank-opt input { width: 15px; height: 15px; accent-color: var(--gold); cursor: pointer; }
+  .blank-opt input:checked + span { color: var(--gold2); }
+  .field-off { opacity: .38; }
+  .field-wrap { transition: opacity .2s; }
+  .upload {
+    margin-top: 16px; border: 1.5px dashed var(--line); border-radius: 12px; padding: 22px;
+    text-align: center; color: var(--dim); cursor: pointer; transition: .2s; font-size: 14px;
+  }
+  .upload:hover, .upload.drag { border-color: var(--gold); color: var(--gold2); background: rgba(245,196,81,.04); }
+  .thumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 10px; margin-top: 12px; }
+  .thumb { position: relative; border-radius: 10px; overflow: hidden; aspect-ratio: 1; border: 1px solid var(--line); }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .thumb button {
+    position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; border-radius: 50%;
+    border: none; background: rgba(0,0,0,.6); color: #fff; font-size: 13px; cursor: pointer; line-height: 1;
+  }
+  .thumb .idx { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,.55); color: #fff; font-size: 11px; text-align: center; padding: 2px 0; }
+  .preview-frame {
+    width: 100%; aspect-ratio: 3 / 4; border: 1px solid var(--line); border-radius: 12px;
+    background: #060c14; display: block;
+  }
+  .actions { position: fixed; bottom: 0; left: 0; right: 0; padding: 14px 18px calc(14px + env(safe-area-inset-bottom));
+    background: linear-gradient(transparent, var(--bg) 30%); display: flex; justify-content: center; z-index: 10; }
+  .btn-publish {
+    width: 100%; max-width: 480px; padding: 15px; border: none; border-radius: 14px; cursor: pointer;
+    font-size: 16px; font-weight: 600; letter-spacing: .06em; color: #201a05;
+    background: linear-gradient(135deg, var(--gold2), var(--gold)); box-shadow: 0 6px 24px rgba(245,196,81,.25);
+    transition: transform .15s, opacity .2s;
+  }
+  .btn-publish:active { transform: scale(.98); }
+  .btn-publish:disabled { opacity: .55; cursor: wait; }
+  .result {
+    margin-top: 12px; background: rgba(61,220,132,.08); border: 1px solid rgba(61,220,132,.4);
+    border-radius: 12px; padding: 14px; font-size: 14px; word-break: break-all; display: none;
+  }
+  .result.show { display: block; }
+  .result a { color: var(--green); }
+  .err { color: var(--danger); }
+  .count { font-size: 12px; color: var(--dim); margin-top: 8px; }
+  .type-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .type-opt {
+    display: block; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px;
+    background: var(--bg2); cursor: pointer; transition: border-color .15s, background .15s;
+  }
+  .type-opt input { display: none; }
+  .type-opt .type-name { display: block; font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .type-opt small { display: block; font-size: 11px; color: var(--dim); line-height: 1.5; }
+  .type-opt:has(input:checked) { border-color: #d8b65c; background: rgba(216,182,92,.08); }
+  .type-opt:active { transform: scale(.99); }
+  @media (max-width: 640px) { .type-pick { grid-template-columns: 1fr; } }
+  .result-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .result-qr { display: block; margin: 12px auto 0; background: #fff; border-radius: 10px; padding: 6px; }
+  .mini-btn {
+    display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 10px;
+    border: 1px solid var(--line); background: var(--bg2); color: var(--text); font-size: 13px;
+    cursor: pointer; text-decoration: none; transition: .2s;
+  }
+  .mini-btn:hover { border-color: var(--gold); color: var(--gold2); }
+  .mini-btn.lp-ghost { background: transparent; color: var(--dim); }
+  /* 管理链接面板 */
+  #link-panel {
+    position: fixed; inset: 0; background: rgba(4,8,14,.72); backdrop-filter: blur(3px);
+    display: flex; align-items: center; justify-content: center; padding: 18px; z-index: 50;
+  }
+  .lp-card {
+    width: 100%; max-width: 380px; background: var(--card); border: 1px solid var(--line);
+    border-radius: 16px; padding: 20px; text-align: left; max-height: 90vh; overflow: auto;
+  }
+  .lp-title { font-size: 16px; font-weight: 600; color: var(--gold2); margin-bottom: 10px; }
+  .lp-hint { font-size: 12.5px; color: var(--dim); line-height: 1.6; margin-bottom: 10px; }
+  .lp-hint.dim { opacity: .8; margin-top: 8px; margin-bottom: 0; }
+  .lp-url {
+    font-size: 11.5px; color: var(--text); background: var(--bg2); border: 1px solid var(--line);
+    border-radius: 10px; padding: 10px; word-break: break-all; line-height: 1.5; margin-bottom: 12px;
+  }
+  .lp-actions { display: flex; gap: 8px; margin-bottom: 14px; }
+  .lp-qr { display: flex; justify-content: center; }
+  .lp-qr canvas { width: 200px; height: 200px; border-radius: 10px; background: #fff; padding: 6px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🎄 圣诞树工作台 <span>Studio</span></h1>
+  <a class="gh-link" href="./my/" title="查看/管理我生成的树">📁 我的树</a>
+  <a class="gh-link" href="./tree/" target="_blank" rel="noopener" title="打开完整版圣诞树（手势训练师 / 净屏观赏 / 回忆上传）">🧠 手势实验室</a>
+  <a class="gh-link" href="https://github.com/Huaxun233" target="_blank" rel="noopener">
+    <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+    站长 GitHub
+  </a>
+</header>
+<main>
+  <section class="guide" style="grid-column:1/-1;border:1px solid var(--line);border-radius:12px;padding:12px 16px;font-size:13px;color:var(--dim);display:flex;gap:14px;align-items:baseline;flex-wrap:wrap">
+    <span style="color:var(--gold,#d8b65c);letter-spacing:.12em;font-size:11px;white-space:nowrap">NEWCOMERS · 第一次来</span>
+    <p style="margin:0;line-height:1.7;flex:1;min-width:280px">打开任意一棵树后，右上角 <b>◉ 净屏观赏</b> 可一键收起所有提示，只留星光与照片；<b>回忆</b> 上传照片，<b>摄像头</b> 开启手势捕捉，<b>训练师</b> 可教它认得你的手势。</p>
+  </section>
+  <section class="card">
+    <h2>① 选择圣诞树款式</h2>
+    <div class="type-pick" id="type-pick">
+      <label class="type-opt">
+        <input type="radio" name="tree-type" value="a" checked>
+        <span class="type-name">🎄 经典圣诞树</span>
+        <small>题字木牌 · 心愿短句 · 手势交互 · 回忆相册</small>
+      </label>
+      <label class="type-opt">
+        <input type="radio" name="tree-type" value="b">
+        <span class="type-name">✨ 璀璨圣诞树</span>
+        <small>金色题字横幅 · 照片礼盒 · 星光漂浮 · 双模式</small>
+      </label>
+    </div>
+
+    <h2 style="margin-top:18px">② 定制内容</h2>
+    <label for="title-input">题字（经典=树旁牌子 · 璀璨=顶部金色横幅）</label>
+    <div class="field-wrap" id="title-wrap">
+      <input type="text" id="title-input" maxlength="60" placeholder="亲爱的" value="亲爱的">
+    </div>
+    <label class="blank-opt"><input type="checkbox" id="blank-title"><span>牌子上不放名字（题字留空）</span></label>
+    <div class="hint">最多 60 字，支持中文与英文。</div>
+
+    <div id="adv-area">
+    <button type="button" class="mini-btn" id="adv-toggle" style="margin-top:14px">▸ 更多文字自定义</button>
+    <div id="adv-body" style="display:none">
+      <label for="introzh-input" style="margin-top:14px">开屏主文案（原「圣诞快乐」）</label>
+      <div class="field-wrap" id="introzh-wrap">
+        <input type="text" id="introzh-input" maxlength="30" placeholder="圣诞快乐">
+      </div>
+      <label class="blank-opt"><input type="checkbox" id="blank-introzh"><span>开屏主文案留空不显示</span></label>
+      <label for="introen-input" style="margin-top:10px">开屏英文（原「A Christmas Wish」）</label>
+      <div class="field-wrap" id="introen-wrap">
+        <input type="text" id="introen-input" maxlength="40" placeholder="A Christmas Wish">
+      </div>
+      <label class="blank-opt"><input type="checkbox" id="blank-introen"><span>开屏英文留空不显示</span></label>
+      <label for="foot-input" style="margin-top:10px">牌子的落款（原「Merry Christmas · 2026」）</label>
+      <div class="field-wrap" id="foot-wrap">
+        <input type="text" id="foot-input" maxlength="40" placeholder="Merry Christmas · 2026">
+      </div>
+      <label class="blank-opt"><input type="checkbox" id="blank-foot"><span>落款留空不显示</span></label>
+      <label for="wishes-input" style="margin-top:10px">心愿短句（OK 手势浮现的话，每行一条，可写「中文|英文」）</label>
+      <div class="field-wrap" id="wishes-wrap">
+        <textarea id="wishes-input" rows="4" placeholder="愿你所念，皆有回响|may it echo back&#10;山高水长，后会有期|until we meet again" style="width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:10px;color:var(--text);padding:10px 12px;font:13px/1.6 inherit;resize:vertical"></textarea>
+      </div>
+      <label class="blank-opt"><input type="checkbox" id="blank-wishes"><span>心愿短句留空不显示（OK 手势不再浮现短句）</span></label>
+      <div class="hint">留空则使用默认文案。最多 20 条。</div>
+    </div>
+    </div>
+    <div class="hint" id="b-note" style="display:none">璀璨圣诞树没有心愿短句等文字自定义，题字会显示为树顶金色横幅。</div>
+
+    <div class="upload" id="upload-zone">
+      📷 点这里或把照片拖进来<br>
+      <span style="font-size:12px">建议 1–10 张 · 自动压缩 · 最多 30 张</span>
+    </div>
+    <input type="file" id="file-input" accept="image/*" multiple hidden>
+    <div class="thumbs" id="thumbs"></div>
+    <div class="count" id="count"></div>
+  </section>
+
+  <section class="card">
+    <h2>③ 实时预览</h2>
+    <iframe id="preview" class="preview-frame" title="预览"></iframe>
+    <div class="hint">预览即最终效果（手势交互需摄像头权限，在正式链接里可用）。</div>
+  </section>
+</main>
+<div class="actions">
+  <button class="btn-publish" id="publish">✦ 生成我的圣诞树链接</button>
+</div>
+<div class="result" id="result"></div>
+<script src="./vendor/qrcode.js"></script>
+<script src="./studio.js"></script>
+</body>
+</html>

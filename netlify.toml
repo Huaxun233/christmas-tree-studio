@@ -1,0 +1,41 @@
+# 2026-11-23 起主站迁移 Cloudflare Pages（functions/ 为 CF 版）。
+# 本文件保留用于回退：netlify-functions/ 是原 Netlify 版函数。
+[build]
+  command = "node studio/build.js"
+  publish = "studio/public"
+  functions = "netlify-functions"
+
+[[redirects]]
+  from = "/tree/api/photos"
+  to = "/.netlify/functions/photos"
+  status = 200
+
+[[redirects]]
+  from = "/api/create"
+  to = "/.netlify/functions/create"
+  status = 200
+
+[[redirects]]
+  from = "/api/admin"
+  to = "/.netlify/functions/admin"
+  status = 200
+
+[[redirects]]
+  from = "/api/my"
+  to = "/.netlify/functions/my"
+  status = 200
+
+[[redirects]]
+  from = "/api/create-b"
+  to = "/.netlify/functions/create-b"
+  status = 200
+
+[[redirects]]
+  from = "/b/api/photos"
+  to = "/.netlify/functions/photos-b"
+  status = 200
+
+[[redirects]]
+  from = "/api/stats"
+  to = "/.netlify/functions/stats"
+  status = 200
