@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>纯CSS螺旋圣诞树 · Demo02</title>
+<meta name="robots" content="noindex">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  background:radial-gradient(ellipse at bottom,#12203a 0%,#060a18 70%); overflow:hidden; font-family:sans-serif; }
+h1 { color:#e8d9a8; letter-spacing:.3em; font-size:20px; margin-bottom:10px; }
+/* 螺旋树：多层横条，宽度从上到下递增，每层旋转交错 + 波浪色相 */
+.tree { position:relative; width:320px; height:430px; }
+.seg { position:absolute; left:50%; height:16px; border-radius:10px;
+  transform-origin:center; animation:sway 3s ease-in-out infinite alternate; }
+@keyframes sway { from { margin-left:-6px; } to { margin-left:6px; } }
+.seg::after { content:""; position:absolute; right:-10px; top:3px; width:10px; height:10px; border-radius:50%;
+  background:radial-gradient(circle,#fff 0%,#ffd76a 40%,transparent 70%); animation:bulb 1.4s ease-in-out infinite; }
+@keyframes bulb { 0%,100% { opacity:1; } 50% { opacity:.2; } }
+.top { position:absolute; left:50%; transform:translateX(-50%); top:0; font-size:30px; color:#ffd76a;
+  text-shadow:0 0 12px #ffd76a; animation:pulse 1.6s ease-in-out infinite; }
+@keyframes pulse { 50% { transform:translateX(-50%) scale(1.25); } }
+.trunk { position:absolute; left:50%; transform:translateX(-50%); bottom:0; width:30px; height:24px; background:#5a3a1a; border-radius:0 0 6px 6px; }
+</style>
+</head>
+<body>
+<h1>纯CSS螺旋圣诞树</h1>
+<div class="tree" id="tree">
+  <div class="top">★</div>
+</div>
+<script>
+// 26 层横条：宽度自上而下递增，色相沿树身渐变（绿→青→金），交错延迟产生螺旋摆动
+const tree = document.getElementById("tree");
+const N = 26;
+for (let i = 0; i < N; i++) {
+  const t = i / (N - 1);
+  const seg = document.createElement("div");
+  seg.className = "seg";
+  const w = 30 + t * 240;
+  seg.style.width = w + "px";
+  seg.style.top = 40 + t * 370 + "px";
+  seg.style.marginLeft = -w / 2 + "px";
+  seg.style.background = `linear-gradient(90deg, hsl(${150 + t * 40} 60% ${28 + (i % 3) * 6}%), hsl(${140 + t * 30} 55% ${20 + (i % 3) * 5}%))`;
+  seg.style.animationDelay = (i * 0.08) + "s";
+  seg.querySelector; // noop
+  const bulbDelay = document.createElement("style");
+  // 灯泡延迟：利用 CSS 变量传给 ::after
+  seg.style.setProperty("--d", (i * 0.12) + "s");
+  seg.querySelector; 
+  tree.appendChild(seg);
+}
+// 给每层灯泡设置独立延迟（style 标签一次性注入）
+const style = document.createElement("style");
+let css = "";
+for (let i = 0; i < N; i++) css += `.seg:nth-child(${i + 2})::after { animation-delay:${(i * 0.12).toFixed(2)}s; }\n`;
+style.textContent = css;
+document.head.appendChild(style);
+</script>
+</body>
+</html>
