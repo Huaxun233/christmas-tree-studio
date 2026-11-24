@@ -64,7 +64,7 @@
     var isB = treeType === "b";
     var isC = treeType === "c";
     var isD = treeType === "d";
-    var isFG = treeType === "f" || treeType === "g";
+    var isFG = treeType === "f" || treeType === "g" || treeType === "h";
     if (advArea) advArea.style.display = (isB || isFG) ? "none" : "block";
     var bTextArea = $("b-text-area");
     if (bTextArea) bTextArea.style.display = isB ? "block" : "none";
@@ -187,15 +187,16 @@
       var isD = treeType === "d";
       var isF = treeType === "f";
       var isG = treeType === "g";
+      var isH = treeType === "h";
       if (isB) cfg.custom = collectBCustom();
       if (isC || isD) {
         cfg.custom = { sub: (cdSubInput && cdSubInput.value.trim()) || "" };
         if (isD) cfg.photos = []; // D 型无照片
       }
-      if (isF || isG) cfg.custom = undefined; // F/G 无文字自定义，题字即横幅
-      var pkey = isB ? "studio_preview_b" : (isC ? "studio_preview_c" : (isD ? "studio_preview_d" : (isF ? "studio_preview_f" : (isG ? "studio_preview_g" : "studio_preview"))));
+      if (isF || isG || isH) cfg.custom = undefined; // F/G/H 无文字自定义，题字即横幅
+      var pkey = isB ? "studio_preview_b" : (isC ? "studio_preview_c" : (isD ? "studio_preview_d" : (isF ? "studio_preview_f" : (isG ? "studio_preview_g" : (isH ? "studio_preview_h" : "studio_preview")))));
       try { sessionStorage.setItem(pkey, JSON.stringify(cfg)); } catch (e) {}
-      var pdir = isB ? "b" : (isC ? "c" : (isD ? "d" : (isF ? "f" : (isG ? "g" : "tree"))));
+      var pdir = isB ? "b" : (isC ? "c" : (isD ? "d" : (isF ? "f" : (isG ? "g" : (isH ? "h" : "tree")))));
       preview.src = "./" + pdir + "/?preview=1&t=" + Date.now();
     }, 400);
   }
@@ -232,8 +233,9 @@
       var isD = treeType === "d";
       var isF = treeType === "f";
       var isG = treeType === "g";
-      var api = isB ? "/api/create-b" : (isC ? "/api/create-c" : (isD ? "/api/create-d" : (isF ? "/api/create-f" : (isG ? "/api/create-g" : "/api/create"))));
-      var custom = isB ? collectBCustom() : ((isC || isD) ? { sub: (cdSubInput && cdSubInput.value.trim()) || "" } : (isF || isG ? undefined : collectCustom()));
+      var isH = treeType === "h";
+      var api = isB ? "/api/create-b" : (isC ? "/api/create-c" : (isD ? "/api/create-d" : (isF ? "/api/create-f" : (isG ? "/api/create-g" : (isH ? "/api/create-h" : "/api/create")))));
+      var custom = isB ? collectBCustom() : ((isC || isD) ? { sub: (cdSubInput && cdSubInput.value.trim()) || "" } : (isF || isG || isH ? undefined : collectCustom()));
       var res = await fetch(api, {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -243,7 +245,7 @@
       if (!res.ok) throw new Error(data.error || ("HTTP " + res.status));
       saveMyTree(data);
       var qr = qrDataUrl(data.url);
-      var typeLabel = isB ? "✨ 璀璨圣诞树" : (isC ? "🌌 记忆漩涡树" : (isD ? "🫱 手势圣诞树" : (isF ? "🌟 星光璀璨树" : (isG ? "🎁 圣诞树空间" : "🎄 经典圣诞树"))));
+      var typeLabel = isB ? "✨ 璀璨圣诞树" : (isC ? "🌌 记忆漩涡树" : (isD ? "🫱 手势圣诞树" : (isF ? "🌟 星光璀璨树" : (isG ? "🎁 圣诞树空间" : (isH ? "🖤 黑金粒子树" : "🎄 经典圣诞树")))));
       resultBox.innerHTML =
         typeLabel + " 生成成功！永久链接：<br><a href=\"" + data.url + "\" target=\"_blank\" rel=\"noopener\">" + data.url + "</a><br>" +
         "<span style=\"color:var(--dim);font-size:12px\">点开即可玩，分享给朋友也用这条链接；长按二维码可保存/识别</span><br>" +
