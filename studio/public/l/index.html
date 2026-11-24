@@ -1,0 +1,392 @@
+﻿<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>星屿 · 我的圣诞树</title><meta name="robots" content="noindex"><script src="./l-boot.js"></script><script src="./studio-fab.js"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#100c10;color:#f4dfbd;font:14px system-ui}canvas{width:100vw;height:100dvh;display:block;touch-action:none}footer{position:fixed;bottom:18px;left:0;right:0;text-align:center}button{background:#201918;color:#ead5aa;border:1px solid #685437;border-radius:24px;padding:8px 16px;cursor:pointer}small{display:block;margin:8px;color:#baab9a}video{position:fixed;bottom:20px;right:16px;width:min(19vw,140px);transform:scaleX(-1);border-radius:6px}
+
+body{background:#080b14;color:#fff1d1;font-family:"Microsoft YaHei",system-ui,sans-serif;overflow:hidden}
+header{position:fixed;left:max(20px,env(safe-area-inset-left));top:max(20px,env(safe-area-inset-top));pointer-events:none;text-shadow:0 2px 12px #080812}
+h1{font:500 clamp(20px,3vw,30px) Georgia,serif;letter-spacing:.12em;margin:0 0 5px}
+#growth{font-size:12px;color:#ecd6ae}progress{display:block;width:112px;height:3px;margin-top:8px;border:0;background:#34313c;accent-color:#e3bd77}progress::-webkit-progress-bar{background:#34313c}progress::-webkit-progress-value{background:#edce8d}
+footer{bottom:max(7px,env(safe-area-inset-bottom));padding:0 8px}button{min-height:42px;padding:8px 14px;background:#171725eb;border-color:#665648;font-size:13px}
+button:focus-visible{outline:2px solid #fff0b4}#hold{touch-action:none;user-select:none;-webkit-user-select:none;background:#392d26}
+video{bottom:110px;pointer-events:none}
+#garden{position:fixed;inset:0;pointer-events:none}
+.seed{position:absolute;pointer-events:auto;width:48px;height:48px;min-height:48px;padding:0;border:0;background:transparent;color:#ffefad;font-size:27px;line-height:1;text-shadow:0 0 6px #fff7bf,0 0 18px #ffba43;animation:float 3s ease-in-out infinite alternate}
+.seed:before{content:"";position:absolute;inset:7px;border:1px solid #ffde9380;border-radius:50%}
+@keyframes float{to{transform:translate(4px,-9px) rotate(12deg)}}
+#hint{position:fixed;top:max(20px,env(safe-area-inset-top));right:16px;max-width:44vw;text-align:right;color:#efe0c9;font-size:12px;line-height:1.6;pointer-events:none}
+@media(max-width:520px){footer button{padding:6px 10px;font-size:12px}small{font-size:11px}video{width:76px}}
+#finger{position:fixed;left:0;top:0;width:26px;height:26px;border:1px solid #d1fff7;border-radius:50%;pointer-events:none;box-shadow:0 0 12px #8cead7;z-index:3}.seed.aim{outline:2px solid #c5ffed;background:#34575380}</style><canvas aria-label="金色粒子圣诞树"></canvas><header><h1>星屿圣诞树</h1><span id="growth"></span><progress id="meter" aria-label="圣诞树成长进度"></progress></header><div id="hint" role="status"></div><i id="finger" hidden></i><div id="garden"></div><footer><button id="toggle">散开星尘</button> <button id="demo">演示流星雨</button> <button id="hold">按住蓄能</button> <button id="camera">开启手势</button><small id="status" aria-live="polite">滑动召唤流星 · 按住蓄能，松手引爆</small></footer><video muted playsinline hidden></video>
+<script>
+const canvas=document.querySelector('canvas'), ctx=canvas.getContext('2d');
+const toggle=document.querySelector('#toggle'),camera=document.querySelector('#camera'),statusLine=document.querySelector('#status');
+const tau=2*Math.PI, rand=Math.random;
+const points=Array.from({length:5400},(_,i)=>{
+  const h=Math.sqrt(rand()),r=.31*h*(i%4===0?Math.sqrt(rand()):.86+.14*rand());
+  return {h,r,a:i%6===0?tau*h*5+rand()*.14:rand()*tau,u:rand()*2-1,v:rand()*2-1,z:rand(),phase:rand()*tau};
+});
+const dust=Array.from({length:380},()=>[rand(),rand(),rand()]);
+let width,height,scale,spread=0,target=0,last=0;
+let colorAge=0,rainAge=0,raining=false,dx=0,dy=1,handAnchor=null,drag=null;
+const wrap=(x,size)=>((x%size)+size)%size;
+const clamp=x=>Math.min(1,Math.max(0,x));
+let keepColors=false,pinching=false,keySpin=false,spinSpeed=0,treeAngle=0;
+let charge=0,armed=false,burstAge=Infinity,sparks=[];
+const stages=[
+  {count:0,name:'星芽'},{count:3,name:'星链'},{count:8,name:'极光'},{count:15,name:'星冠'}
+];
+let harvest=0;
+try{harvest=Math.max(0,Math.min(999999,Math.floor(Number(localStorage.getItem('starlit.harvest'))||0)))}catch{}
+const garden=document.querySelector('#garden'),hint=document.querySelector('#hint');
+let level=0,waveStarted=false;
+function updateGarden(){
+  level=stages.filter(stage=>stage.count<=harvest).length-1;
+  const next=stages[level+1];
+  document.querySelector('#growth').textContent=stages[level].name+' · '+harvest+' 颗星种';
+  const meter=document.querySelector('#meter');
+  meter.max=next ? next.count-stages[level].count : 1;
+  meter.value=next ? harvest-stages[level].count : 1;
+  hint.textContent=next ? '再收集 '+(next.count-harvest)+' 颗，点亮'+next.name : '星冠已点亮';
+}
+function releaseSeeds(){
+  if(garden.childElementCount)return;
+  for(let i=0;i<3;i++){
+    const seed=document.createElement('button');seed.className='seed';
+    seed.textContent='✦';seed.setAttribute('aria-label','收集星种');
+    seed.style.left=(8+i*28+rand()*9)+'%';seed.style.top=(24+rand()*34)+'%';
+    seed.style.animationDelay=(-rand()*3)+'s';
+    seed.onclick=()=>{
+      seed.remove();harvest++;try{localStorage.setItem('starlit.harvest',String(harvest))}catch{}
+      updateGarden();
+      if(!garden.childElementCount)hint.textContent+=' · 再次蓄能引爆可获得星种';
+    };
+    garden.append(seed);
+  }
+  hint.textContent='轻点星种，或用食指瞄准后捏合收集';
+}
+const finger=document.querySelector('#finger');
+let pickedGrip=false,aimed=null;
+function clearAim(){
+  aimed?.classList.remove('aim');aimed=null;pickedGrip=false;finger.hidden=true;
+}
+function aimAtSeed(x,y,closed){
+  finger.hidden=false;finger.style.transform='translate('+ (x-13)+'px,'+(y-13)+'px)';
+  if(pickedGrip && closed)return true;
+  pickedGrip=false;
+  let closest=null,best=42;
+  for(const seed of garden.children){
+    const box=seed.getBoundingClientRect();
+    const distance=Math.hypot(x-box.left-box.width/2,y-box.top-box.height/2);
+    if(distance<best){best=distance;closest=seed}
+  }
+  aimed?.classList.remove('aim');aimed=closest;aimed?.classList.add('aim');
+  if(!closest)return false;
+  if(closed){closest.click();pickedGrip=true;aimed=null}
+  return true;
+}
+const spectrum=Array.from({length:360},(_,i)=>'hsl('+i+',78%,74%)');
+const companions=[];
+function orbitStars(cx,top,t,front,dt){
+  const count=Math.min(26,3+harvest);
+  ctx.save();ctx.globalCompositeOperation='lighter';
+  for(let i=0;i<count;i++){
+    const lane=i%3,angle=t*(.39+lane*.09)+i*2.4;
+    const depth=Math.sin(angle);
+    if((depth>=0)!==front)continue;
+    const r=Math.min(width*.41,scale*(.25+lane*.08));
+    const y0=top+scale*(.34+lane*.21),tilt=(lane-1)*.18;
+    const orbitX=cx+r*Math.cos(angle),orbitY=y0+r*(depth*.29+Math.cos(angle)*tilt);
+    const star=companions[i]??={x:orbitX,y:orbitY,vx:0,vy:0,path:[],flying:false,returning:false};
+    const flying=raining && rainAge>(i%7)*.16;
+    const speed=scale*(.48+.17*lane);
+    const easing=1-Math.exp(-dt*4);
+    if(flying){
+      star.vx+=(dx*speed-star.vx)*easing;
+      star.vy+=(dy*speed-star.vy)*easing;
+      star.x+=star.vx*dt;star.y+=star.vy*dt;
+      if(star.x < -24 || star.x>width+24 || star.y < -24 || star.y>height+24){
+        star.x=wrap(star.x+24,width+48)-24;star.y=wrap(star.y+24,height+48)-24;
+        star.path.length=0;
+      }
+    }else{
+      if(star.flying)star.returning=true;
+      star.x+=(orbitX-star.x)*(star.returning?easing:1);
+      star.y+=(orbitY-star.y)*(star.returning?easing:1);
+      star.vx=0;star.vy=0;
+      if(Math.hypot(star.x-orbitX,star.y-orbitY)<2 || (!target && spread<.001))star.returning=false;
+    }
+    star.flying=flying;
+    const x=star.x,y=star.y;
+    const hue=Math.floor((t*7+lane*34+i*7+40)%360),size=Math.max(2,scale*.009)*(1+.28*depth);
+    const path=star.path,life=flying?.60:.33;
+    while(path.length && path[0].time<t-life)path.shift();
+    if(!path.length || t-path[path.length-1].time>=.018)path.push({x,y,time:t});
+    ctx.fillStyle=spectrum[hue];ctx.lineCap='round';
+    for(let j=0;j<path.length;j++){
+      const a=path[j],b=path[j+1] || star,fade=clamp(1-(t-a.time)/life);
+      ctx.globalAlpha=fade*fade*.76;ctx.lineWidth=Math.max(.5,size*.72*fade);
+      ctx.strokeStyle=spectrum[(hue+Math.round((1-fade)*66))%360];
+      ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+      if(flying && j%3===0){
+        ctx.globalAlpha=fade*(1-fade)*.85;
+        ctx.fillRect(a.x+Math.sin(a.time*7+i)*4,a.y+Math.cos(a.time*5)*3,1.4,1.4);
+      }
+    }
+    ctx.globalAlpha=.72+.22*depth;ctx.shadowBlur=size*2;ctx.shadowColor=ctx.fillStyle;
+    ctx.beginPath();
+    for(let k=0;k<8;k++){const a=k*Math.PI/4,rad=k%2?size*.28:size*1.35;ctx.lineTo(x+rad*Math.cos(a),y+rad*Math.sin(a))}
+    ctx.closePath();ctx.fill();ctx.shadowBlur=0;
+  }
+  ctx.restore();
+}
+function drawGrowth(cx,top,t){
+  if(!level)return;
+  ctx.save();ctx.globalCompositeOperation='lighter';ctx.globalAlpha=1-spread;
+  if(level>=2){
+    const gradient=ctx.createRadialGradient(cx,top+scale*.52,1,cx,top+scale*.52,scale*.55);
+    gradient.addColorStop(0,'rgba(63,215,193,.11)');gradient.addColorStop(.62,'rgba(111,92,232,.10)');gradient.addColorStop(1,'rgba(30,40,90,0)');
+    ctx.fillStyle=gradient;ctx.fillRect(cx-scale,top-scale*.1,scale*2,scale*1.3);
+  }
+  for(let i=0;i<80;i++){
+    const h=.12+i*.0106,a=h*19+treeAngle,r=h*.31*scale;
+    const x=cx+r*Math.cos(a),y=top+h*scale+r*.19*Math.sin(a);
+    ctx.fillStyle=level>=2 ? 'hsl('+(155+h*140)+',85%,77%)' : '#ffdf9f';
+    const size=Math.max(.7,scale*.003)*(1.2+.45*Math.sin(a));
+    ctx.beginPath();ctx.arc(x,y,size,0,tau);ctx.fill();
+  }
+  if(level>=3){
+    for(let i=0;i<9;i++){
+      const a=t*.42+i*tau/9;
+      const x=cx+scale*.085*Math.cos(a),y=top-scale*.031+scale*.022*Math.sin(a);
+      glow(x,y,scale*.013,'#fff3bf');
+    }
+  }
+  ctx.restore();
+}
+updateGarden();
+function explode(){
+  if(!armed)return;
+  releaseSeeds();armed=false;charge=0;burstAge=0;keepColors=true;scatter(true);
+  sparks=Array.from({length:920},(_,i)=>{
+    const a=rand()*tau,depth=rand(),speed=(.16+depth**2*1.22);
+    return {vx:Math.cos(a)*speed,vy:Math.sin(a)*speed,hue:(i%9)*40+rand()*22,life:1.1+rand()*2.4,size:.6+depth*2.4};
+  });
+}
+addEventListener('keydown',e=>{if(e.code==='KeyR' && !e.ctrlKey && !e.metaKey){keySpin=true;scatter(false)}});
+addEventListener('keyup',e=>{if(e.code==='KeyR'){keySpin=false;explode()}});
+addEventListener('blur',()=>{keySpin=false;pinching=false});
+const colors=[[65,169,255],[168,99,255],[53,247,223],[255,97,178],[255,225,164],[214,230,255]];
+const palettes=Array.from({length:3},(_,k)=>colors.map(color=>{
+  const gold=[[217,131,38],[255,202,80],[255,244,179]][k];
+  return Array.from({length:65},(_,n)=>'rgb('+gold.map((c,j)=>Math.round(c+(color[j]-c)*n/64)).join(',')+')');
+}));
+for(const p of points){
+  p.palette=palettes[p.z>.87?2:p.z>.35?1:0][Math.floor(rand()*colors.length)];
+  // Each shell draws its members from the corresponding slice of the tree.
+  p.shell=Math.min(9,Math.floor(p.h*10));
+  p.shellHeight=(p.shell+.5)/10;
+  p.release=(9-p.shell)*.069+rand()*.12;
+  p.mobile=rand()<.80;
+  p.grain=rand()-.5;
+  p.delay=rand()**2*3.8;p.ox=0;p.oy=0;
+}
+function swipe(x,y){
+  const length=Math.hypot(x,y);
+  if(length<12)return;
+  if(!target)scatter(true);
+  dx=x/length;dy=y/length;raining=true;
+}
+function resize(){
+  width=innerWidth;height=canvas.clientHeight;scale=Math.min(height*.68,width*1.12);
+  const ratio=Math.min(devicePixelRatio,2);
+  canvas.width=Math.round(width*ratio);canvas.height=Math.round(height*ratio);ctx.setTransform(ratio,0,0,ratio,0,0);
+}
+resize();addEventListener('resize',resize);
+function scatter(on){if(target!==Number(on)){rainAge=0;raining=false;handAnchor=null}target=Number(on);toggle.textContent=on?'聚成圣诞树':'散开星尘'}
+toggle.onclick=()=>scatter(!target);
+const hold=document.querySelector('#hold');
+hold.onpointerdown=e=>{hold.setPointerCapture(e.pointerId);keySpin=true;scatter(false);hold.textContent='松手引爆'};
+hold.onpointerup=()=>{keySpin=false;hold.textContent='按住蓄能';explode()};
+hold.onpointercancel=()=>{keySpin=false;hold.textContent='按住蓄能'};
+hold.oncontextmenu=e=>e.preventDefault();
+canvas.onpointerdown=e=>{drag={x:e.clientX,y:e.clientY};canvas.setPointerCapture(e.pointerId)};
+canvas.onpointercancel=()=>{drag=null};
+canvas.onpointermove=e=>{
+  if(!drag)return;
+  const x=e.clientX-drag.x,y=e.clientY-drag.y;
+  if(Math.hypot(x,y)>18){swipe(x,y);drag={x:e.clientX,y:e.clientY,moved:true}}
+};
+document.querySelector('#demo').onclick=()=>{swipe(100,55)};
+canvas.onpointerup=e=>{
+  if(!drag)return;
+  const x=e.clientX-drag.x,y=e.clientY-drag.y,moved=drag.moved;drag=null;
+  if(Math.hypot(x,y)>=12)swipe(x,y);else if(!moved)scatter(!target);
+};
+addEventListener('keydown',e=>{if(e.code==='Space' && !e.repeat && e.target.tagName!=='BUTTON'){e.preventDefault();scatter(!target)}});
+function glow(x,y,r,core){
+  const g=ctx.createRadialGradient(x,y,0,x,y,r);
+  g.addColorStop(0,core);g.addColorStop(.2,'rgba(255,200,48,.38)');g.addColorStop(1,'rgba(255,150,12,0)');
+  ctx.fillStyle=g;ctx.fillRect(x-r,y-r,r*2,r*2);
+}
+function drawEnergy(cx,top,t){
+  ctx.save();
+  ctx.globalCompositeOperation='lighter';
+  if(burstAge<3.5){
+    const y=top+scale*.52;
+    const travel=age=>1.48*(1-Math.exp(-age*1.65));
+    const head=travel(burstAge),tail=travel(Math.max(0,burstAge-.048));
+    for(const star of sparks){
+      const opacity=clamp(1-burstAge/star.life);
+      if(!opacity)continue;
+      const x=cx+star.vx*scale*head,sy=y+star.vy*scale*head;
+      ctx.strokeStyle='hsla('+star.hue+',98%,68%,'+opacity+')';
+      ctx.lineWidth=star.size;ctx.beginPath();ctx.moveTo(cx+star.vx*scale*tail,y+star.vy*scale*tail);ctx.lineTo(x,sy);ctx.stroke();
+      ctx.fillStyle='rgba(245,246,255,'+opacity+')';ctx.fillRect(x,sy,star.size,star.size);
+    }
+    if(burstAge<.65){
+      ctx.globalAlpha=(1-burstAge/.65)**2;
+      glow(cx,y,scale*(.16+burstAge*.65),'#ffffff');
+    }
+  }
+  ctx.restore();
+}
+function draw(ms){
+  const t=ms*.001,dt=Math.min((ms-last)*.001,.06);last=ms;
+  spread+=(target-spread)*(1-Math.exp(-dt*3.3));
+  colorAge=Math.min(7,Math.max(0,colorAge+(target && spread>.82?dt:target?0:-dt*6)));
+  if(raining && colorAge>.45){
+    if(!waveStarted && rainAge>1){waveStarted=true;releaseSeeds()}
+    rainAge+=dt;
+    if(rainAge>.25)keepColors=true;
+  }
+  spinSpeed+=((pinching || keySpin ? 19 : .32)-spinSpeed)*(1-Math.exp(-dt*4));
+  treeAngle+=spinSpeed*dt;
+  const spinning=pinching || keySpin;
+  charge=clamp(charge+(spinning ? dt/1.45 : -dt*.85));
+  if(spinning && charge>.1)armed=true;
+  burstAge+=dt;
+  const cx=width*.5,top=(height-scale)*.44;
+  ctx.globalCompositeOperation='source-over';ctx.fillStyle='#100c10';ctx.fillRect(0,0,width,height);
+  ctx.globalCompositeOperation='lighter';
+  const night=clamp(colorAge/4);
+  if(night){
+    const fog=ctx.createRadialGradient(width*.42,height*.54,0,width*.42,height*.54,width*.68);
+    fog.addColorStop(0,'#1b1b48');fog.addColorStop(.45,'#161027');fog.addColorStop(1,'#020411');
+    ctx.globalCompositeOperation='source-over';ctx.globalAlpha=night;ctx.fillStyle=fog;ctx.fillRect(0,0,width,height);
+    ctx.globalAlpha=1;ctx.globalCompositeOperation='lighter';
+  }
+  for(const [u,v,z] of dust){
+    ctx.fillStyle='rgba(214,163,95,'+(.14+.26*z)+')';ctx.fillRect(u*width,(v*height+t*(2+5*z))%height,1+z,1+z);
+  }
+  glow(cx,top+scale*.76,scale*.34,'rgba(245,154,38,.14)');
+  orbitStars(cx,top,t,false,dt);
+  for(const p of points){
+    const progress=p.mobile ? clamp((charge-p.release)/.255) : 0;
+    const peel=progress*progress*(3-2*progress);
+    const angle=p.a+treeAngle+peel*(p.shell*.32+p.grain*.10);
+    const depth=Math.sin(angle),side=Math.cos(angle),twinkle=.55+.45*Math.sin(t*2+p.phase);
+    const shellRadius=.07+.34*p.shellHeight+.011*Math.sin(angle*3+p.shell)+p.grain*.021;
+    const radius=p.r+(shellRadius-p.r)*peel;
+    const elevation=p.h+(p.shellHeight-p.h+p.grain*.011)*peel;
+    const x0=radius*side*scale;
+    const y0=(elevation+radius*(depth*.19+peel*side*.065*Math.sin(p.shell*.8)))*scale;
+    const x1=p.u*width*.57+Math.sin(t*.47+p.phase)*scale*.03;
+    const y1=(p.v*.51+.47)*height-top+Math.cos(t*.35+p.phase)*scale*.025;
+    let x=cx+x0*(1-spread)+x1*spread,y=top+y0*(1-spread)+y1*spread;
+    const tint=Math.max(keepColors ? 1-spread : 0,clamp((colorAge-p.phase*.22)/4));
+    const wave=Math.floor((38+t*7+p.h*58+p.z*18)%360);
+    ctx.fillStyle=spread<.015 ? spectrum[wave] : p.palette[Math.round(tint*64)];
+    const meteor=raining && p.z>.965 ? clamp((rainAge-p.delay)/1.6) : 0;
+    if(meteor){
+      const speed=scale*(.32+.6*p.phase/tau)*meteor;
+      p.ox+=dx*speed*dt;p.oy+=dy*speed*dt;
+    }
+    if(p.ox || p.oy){
+      const mx=wrap(x+p.ox+90,width+180)-90,my=wrap(y+p.oy+90,height+180)-90;
+      x+=(mx-x)*spread;y+=(my-y)*spread;
+      if(!target && spread<.005){p.ox=p.oy=0}
+    }
+    ctx.globalAlpha=(.29+.64*twinkle)*(.78+.22*depth)*(1-spread*.44);
+    const s=Math.max(.6,scale*.0034)*(.32+p.z*1.24);
+    if(peel>.01 && spread<.9){
+      // Short tangent glints stay attached to the brightest individual grains.
+      ctx.globalAlpha*=.68+.32*(depth+1)/2;
+      if(p.z>.82){
+        ctx.strokeStyle=ctx.fillStyle;ctx.lineWidth=Math.max(.55,s*.46);
+        const trail=radius*scale*.045*peel*(1-spread);
+        ctx.beginPath();ctx.moveTo(x+depth*trail,y-side*trail*.19);ctx.lineTo(x,y);ctx.stroke();
+      }
+      ctx.beginPath();ctx.arc(x,y,Math.max(.42,s*(.33+.14*(1+depth))),0,tau);ctx.fill();
+    }else ctx.fillRect(x,y,s,s);
+    if(p.z>.96 && tint){
+      ctx.globalAlpha=tint*(.22+.45*twinkle);
+      ctx.fillRect(x-2*s,y,5*s,.65);ctx.fillRect(x,y-2*s,.65,5*s);
+    }
+    if(meteor){
+      const tail=scale*(.08+.12*p.phase/tau)*meteor;
+      const gradient=ctx.createLinearGradient(x,y,x-dx*tail,y-dy*tail);
+      gradient.addColorStop(0,ctx.fillStyle);gradient.addColorStop(1,'transparent');
+      ctx.strokeStyle=gradient;ctx.lineWidth=Math.max(1.3,s*.95);ctx.globalAlpha=meteor*.82;
+      ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-dx*tail,y-dy*tail);ctx.stroke();
+    }
+  }
+  ctx.globalAlpha=1-night;glow(cx,top,scale*(.095+.09*spread),'#fff9ce');
+  ctx.fillStyle='#fff7ad';ctx.beginPath();
+  for(let i=0;i<10;i++){const a=i*Math.PI/5-Math.PI/2,r=scale*(i%2?.011:.026);ctx.lineTo(cx+r*Math.cos(a),top+r*Math.sin(a))}
+  ctx.closePath();ctx.fill();ctx.globalAlpha=1;drawGrowth(cx,top,t);orbitStars(cx,top,t,true,dt);drawEnergy(cx,top,t);requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+// MediaPipe's hand landmarks are optional. The particle renderer runs locally.
+const video=document.querySelector('video');
+let stream,tracker,running=false;
+async function stop(){
+  clearAim();pinching=false;handAnchor=null;running=false;stream?.getTracks().forEach(track=>track.stop());stream=null;
+  video.srcObject=null;video.hidden=true;
+  if(tracker){await tracker.close();tracker=null}
+  camera.textContent='开启手势';
+}
+camera.onclick=async()=>{
+  camera.disabled=true;
+  try{
+    if(running){await stop();statusLine.textContent='滑动召唤流星 · 按住蓄能，松手引爆';return}
+    statusLine.textContent='正在启动摄像头和手部识别…';
+    stream=await navigator.mediaDevices.getUserMedia({video:{width:480,height:360},audio:false});
+    const base='https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/';
+    if(!window.Hands)await new Promise((resolve,reject)=>{const script=document.createElement('script');script.src=base+'hands.js';script.onload=resolve;script.onerror=reject;document.head.append(script)});
+    tracker=new Hands({locateFile:file=>base+file});
+    tracker.setOptions({maxNumHands:1,modelComplexity:0,minDetectionConfidence:.65,minTrackingConfidence:.65});
+    tracker.onResults(result=>{
+      const hand=result.multiHandLandmarks?.[0];if(!hand){clearAim();pinching=false;handAnchor=null;return}
+      const distance=(a,b)=>Math.hypot(hand[a].x-hand[b].x,hand[a].y-hand[b].y);
+      const palmWidth=Math.hypot((hand[5].x-hand[17].x)*video.videoWidth,(hand[5].y-hand[17].y)*video.videoHeight);
+      const tipGap=Math.hypot((hand[4].x-hand[8].x)*video.videoWidth,(hand[4].y-hand[8].y)*video.videoHeight);
+      const closed=palmWidth>0 && tipGap/palmWidth<((pinching || pickedGrip)?.38:.24);
+      if(aimAtSeed((1-hand[8].x)*width,hand[8].y*height,closed)){
+        pinching=false;handAnchor=null;return;
+      }
+      pinching=closed;
+      if(pinching){handAnchor=null;scatter(false);return}
+      const extended=[8,12,16,20].filter(tip=>distance(tip,0)>distance(tip-2,0)*1.17).length;
+      if(armed && extended>=3)explode();
+      if(extended>=3 || (target && extended>=2)){
+        scatter(true);
+        const x=1-hand[9].x,y=hand[9].y,now=performance.now();
+        if(!handAnchor || now-handAnchor.time>800)handAnchor={x,y,time:now};
+        const hx=x-handAnchor.x,hy=y-handAnchor.y;
+        if(Math.hypot(hx,hy)>.045){
+          swipe(hx*width,hy*height);handAnchor={x,y,time:now};
+        }
+      }else{handAnchor=null;if(extended<=1)scatter(false)}
+    });
+    video.srcObject=stream;await video.play();video.hidden=false;running=true;
+    camera.textContent='关闭手势';statusLine.textContent='张掌散开 · 挥手引出流星 · 握拳聚拢 · 捏合高速旋转 · 再张掌引爆';
+    async function detect(){
+      if(!running)return;
+      try{await tracker.send({image:video});if(running)requestAnimationFrame(detect)}
+      catch{if(running){await stop();statusLine.textContent='识别中断，可点击画面切换'}}
+    }
+    detect();
+  }catch{await stop();statusLine.textContent='手势启动失败，请检查网络和摄像头权限。仍可点击切换。'}
+  finally{camera.disabled=false}
+};
+</script></html>

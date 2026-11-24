@@ -1,4 +1,4 @@
-// functions/api/my.js — 用户自助管理自己的树：/api/my（CF 版）
+﻿// functions/api/my.js — 用户自助管理自己的树：/api/my（CF 版）
 //   鉴权：header x-owner-token（或 ?t=），令牌由 /api/create 下发
 //   GET                          列出自己的树（含回收站状态）
 //   POST { action:"delete", id } 移入回收站（3 分钟内可撤销）
@@ -11,7 +11,7 @@ import { json, tokenHash } from "../lib/http.js";
 const UNDO_MS = 3 * 60 * 1000; // 3 分钟内可撤销
 
 // 树类型 → KV 前缀（a=经典 tree/，b=璀璨 btree/，c=记忆漩涡 ctree/，d=手势 dtree/，f=星光 ftree/，g=空间 gtree/，h=黑金 htree/）
-const PREFIX_BY_TYPE = { a: "tree/", b: "btree/", c: "ctree/", d: "dtree/", f: "ftree/", g: "gtree/", h: "htree/" };
+const PREFIX_BY_TYPE = { a: "tree/", b: "btree/", c: "ctree/", d: "dtree/", f: "ftree/", g: "gtree/", h: "htree/", i: "itree/", j: "jtree/", k: "ktree/", l: "ltree/" };
 const prefixOf = it => PREFIX_BY_TYPE[it.type] || "tree/";
 
 async function handle(context, req) {
