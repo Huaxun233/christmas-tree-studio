@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>圣诞树贺卡 · Demo06</title>
+<meta name="robots" content="noindex">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { min-height:100vh; display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(150deg,#2b1a3d 0%,#101024 100%); font-family:'Segoe UI',sans-serif; overflow:hidden; }
+/* 贺卡：红金配色，打开时内容浮现 */
+.card { position:relative; width:min(680px,92vw); border-radius:18px; padding:56px 48px 44px;
+  background:linear-gradient(160deg,#c0392b 0%,#96281b 100%);
+  box-shadow:0 24px 70px rgba(0,0,0,.55), inset 0 0 0 2px rgba(255,215,140,.55), inset 0 0 0 10px rgba(0,0,0,.08);
+  text-align:center; color:#fff2cc; }
+.card::before { content:""; position:absolute; inset:12px; border:1px dashed rgba(255,215,140,.5); border-radius:12px; pointer-events:none; }
+h1 { font-size:34px; letter-spacing:.14em; margin-bottom:6px; color:#ffe9a8; text-shadow:0 2px 10px rgba(0,0,0,.3); }
+.sub { font-size:14px; letter-spacing:.4em; opacity:.85; margin-bottom:26px; }
+.row { display:flex; align-items:center; justify-content:center; gap:26px; margin-bottom:26px; }
+/* 迷你树（纯CSS） */
+.mini-tree { position:relative; width:120px; }
+.tri { width:0; height:0; margin:0 auto; border-left:26px solid transparent; border-right:26px solid transparent; border-bottom:46px solid #ffd76a; filter:drop-shadow(0 0 6px rgba(255,215,120,.5)); }
+.tri + .tri { margin-top:-16px; border-bottom-color:#f5c445; }
+.trunk { width:14px; height:10px; background:#5a3a1a; margin:0 auto; border-radius:0 0 3px 3px; }
+.bubble { flex:0 1 380px; text-align:left; }
+.bubble textarea { width:100%; min-height:110px; background:rgba(0,0,0,.22); border:1px solid rgba(255,215,140,.4);
+  border-radius:12px; color:#fff2cc; padding:14px 16px; font:14px/1.8 inherit; resize:none; outline:none; }
+.bubble textarea::placeholder { color:rgba(255,242,204,.55); }
+.hint { margin-top:8px; font-size:12px; opacity:.7; }
+.btn { margin-top:14px; background:#ffd76a; color:#7a3a10; border:none; border-radius:999px; padding:10px 30px;
+  font-weight:bold; letter-spacing:.2em; cursor:pointer; box-shadow:0 4px 14px rgba(0,0,0,.3); }
+.btn:hover { transform:translateY(-1px); }
+/* 祝福显影区 */
+.message { margin-top:20px; min-height:52px; font-size:17px; line-height:1.9; letter-spacing:.08em; white-space:pre-wrap;
+  opacity:0; transform:translateY(8px); transition:all .9s ease; color:#fff; text-shadow:0 0 12px rgba(255,215,140,.6); }
+.message.show { opacity:1; transform:none; }
+/* 边角装饰 */
+.deco { position:absolute; font-size:22px; opacity:.9; animation:float 5s ease-in-out infinite; }
+@keyframes float { 50% { transform:translateY(-8px) rotate(6deg); } }
+</style>
+</head>
+<body>
+<div class="card">
+  <span class="deco" style="top:18px;left:26px;">🔔</span>
+  <span class="deco" style="top:18px;right:26px;animation-delay:1.2s;">🎁</span>
+  <span class="deco" style="bottom:16px;left:30px;animation-delay:2s;">❄️</span>
+  <span class="deco" style="bottom:16px;right:30px;animation-delay:.6s;">✨</span>
+  <h1>Merry Christmas</h1>
+  <div class="sub">写 下 你 的 祝 福 · 送 给 想 送 的 人</div>
+  <div class="row">
+    <div class="mini-tree">
+      <div class="tri"></div><div class="tri"></div><div class="tri"></div>
+      <div class="trunk"></div>
+    </div>
+    <div class="bubble">
+      <textarea id="wish" placeholder="在这里写下祝福，比如：愿你所念之人，平安喜乐；愿你所盼之事，皆能圆满。"></textarea>
+      <div class="hint">贺卡右下角的印章会随文字自动落款 ✦ 支持换行</div>
+      <button class="btn" id="seal">盖上祝福</button>
+    </div>
+  </div>
+  <div class="message" id="msg"></div>
+</div>
+<script>
+document.getElementById("seal").addEventListener("click", () => {
+  const t = document.getElementById("wish").value.trim();
+  const m = document.getElementById("msg");
+  m.textContent = t || "🎄 愿你这个冬天，有树可赏，有人可念，有暖可依。";
+  m.classList.remove("show"); void m.offsetWidth; m.classList.add("show");
+});
+</script>
+</body>
+</html>

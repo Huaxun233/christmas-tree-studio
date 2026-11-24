@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HTML+CSS+JS圣诞树 · Demo05</title>
+<meta name="robots" content="noindex">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  background:#05070f; overflow:hidden; font-family:sans-serif; cursor:crosshair; }
+h1 { color:#ffdf8a; letter-spacing:.3em; font-size:20px; margin-bottom:8px; }
+p.tip { color:#5a6a8a; font-size:12px; margin-bottom:12px; }
+canvas { border-radius:12px; box-shadow:0 0 40px rgba(60,200,140,.15); }
+</style>
+</head>
+<body>
+<h1>HTML+CSS+JS 粒子圣诞树</h1>
+<p class="tip">点击画布任意处放一颗彩色灯 · 移动鼠标点亮附近的树</p>
+<canvas id="cv" width="520" height="560"></canvas>
+<script>
+// 经典粒子圣诞树：按树形锥面撒 900 个粒子，鼠标靠近点亮，点击加灯
+const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+const W = cv.width, H = cv.height;
+const mouse = { x: -999, y: -999 };
+const dots = [];
+function buildTree() {
+  dots.length = 0;
+  // 三层锥面 + 顶星
+  for (let i = 0; i < 900; i++) {
+    const layer = i % 3, yTop = [H*0.18, H*0.30, H*0.44][layer], yBot = [H*0.55, H*0.72, H*0.90][layer];
+    const halfW = [90, 130, 170][layer];
+    const t = Math.random();
+    const y = yTop + t * (yBot - yTop);
+    const half = halfW * t;
+    const x = W/2 + (Math.random()*2-1) * half;
+    dots.push({ x, y, r: 1 + Math.random()*1.6, lit: 0,
+      c: ["#2aa05a","#37c46e","#1d7a44"][layer % 3], ph: Math.random()*Math.PI*2 });
+  }
+}
+buildTree();
+const lights = [];
+function draw() {
+  ctx.fillStyle = "rgba(5,7,15,.35)"; ctx.fillRect(0,0,W,H);
+  // 星
+  const pulse = 1 + 0.25*Math.sin(Date.now()/300);
+  ctx.save(); ctx.translate(W/2, H*0.11); ctx.scale(pulse,pulse);
+  ctx.fillStyle = "#ffd76a"; ctx.shadowColor = "#ffd76a"; ctx.shadowBlur = 18;
+  ctx.beginPath();
+  for (let i = 0; i < 10; i++) { const a = i*Math.PI/5 - Math.PI/2, r = i%2 ? 7 : 15;
+    ctx[i ? "lineTo" : "moveTo"](Math.cos(a)*r, Math.sin(a)*r); }
+  ctx.closePath(); ctx.fill(); ctx.restore();
+  // 粒子
+  for (const d of dots) {
+    const dist = Math.hypot(d.x-mouse.x, d.y-mouse.y);
+    if (dist < 70) d.lit = Math.min(1, d.lit + 0.08); else d.lit = Math.max(0, d.lit - 0.03);
+    const glint = 0.5 + 0.5*Math.sin(Date.now()/500 + d.ph);
+    ctx.fillStyle = d.lit > 0.05 ? "#fff3c0" : d.c;
+    ctx.globalAlpha = 0.35 + 0.65*glint*(0.4 + 0.6*d.lit);
+    ctx.shadowBlur = d.lit > 0.05 ? 10 : 0; ctx.shadowColor = "#ffe9a0";
+    ctx.beginPath(); ctx.arc(d.x, d.y, d.r + d.lit*1.5, 0, 7); ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+  ctx.globalAlpha = 1;
+  // 用户点的彩灯
+  for (const L of lights) {
+    const s = 1 + 0.2*Math.sin(Date.now()/260 + L.ph);
+    ctx.fillStyle = L.c; ctx.shadowColor = L.c; ctx.shadowBlur = 14;
+    ctx.beginPath(); ctx.arc(L.x, L.y, 4.5*s, 0, 7); ctx.fill(); ctx.shadowBlur = 0;
+  }
+  requestAnimationFrame(draw);
+}
+cv.addEventListener("mousemove", e => { const r = cv.getBoundingClientRect(); mouse.x = e.clientX-r.left; mouse.y = e.clientY-r.top; });
+cv.addEventListener("mouseleave", () => { mouse.x = -999; mouse.y = -999; });
+cv.addEventListener("click", e => { const r = cv.getBoundingClientRect();
+  lights.push({ x: e.clientX-r.left, y: e.clientY-r.top, c: ["#ff5252","#ffd740","#40c4ff","#ff7ab8","#69f0ae"][lights.length%5], ph: Math.random()*7 }); });
+draw();
+</script>
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>圣诞树合集 · 圣诞树工作台</title>
+<meta name="robots" content="noindex">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { min-height:100vh; background:linear-gradient(180deg,#0b1226 0%,#101a33 100%);
+  color:#e8ecf5; font-family:'Segoe UI',sans-serif; padding:34px 20px 60px; }
+.wrap { max-width:1080px; margin:0 auto; }
+header { text-align:center; margin-bottom:34px; }
+header h1 { font-size:30px; letter-spacing:.16em; color:#ffd76a; text-shadow:0 0 18px rgba(255,215,106,.35); }
+header p { margin-top:10px; color:#8fa0c5; font-size:14px; }
+header a { color:#7fb2ff; text-decoration:none; }
+header a:hover { text-decoration:underline; }
+.grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:22px; }
+.card { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.10); border-radius:14px;
+  overflow:hidden; transition:transform .2s, border-color .2s; }
+.card:hover { transform:translateY(-4px); border-color:rgba(255,215,106,.55); }
+.shot { position:relative; width:100%; height:210px; overflow:hidden; background:#05070f; }
+.shot iframe { width:200%; height:200%; transform:scale(.5); transform-origin:0 0; border:0; pointer-events:none; }
+.badge { position:absolute; top:10px; left:10px; background:rgba(0,0,0,.55); border:1px solid rgba(255,215,106,.4);
+  color:#ffd76a; font-size:11px; letter-spacing:.14em; padding:4px 10px; border-radius:999px; z-index:2; }
+.meta { padding:16px 18px 18px; }
+.meta h2 { font-size:17px; margin-bottom:6px; color:#fff; }
+.meta p { font-size:12.5px; color:#8fa0c5; line-height:1.7; }
+.meta .open { display:inline-block; margin-top:12px; color:#ffd76a; font-size:13px; letter-spacing:.1em;
+  border:1px solid rgba(255,215,106,.45); border-radius:999px; padding:6px 18px; text-decoration:none; }
+.meta .open:hover { background:rgba(255,215,106,.12); }
+footer { text-align:center; margin-top:44px; color:#5a6a8a; font-size:12.5px; line-height:1.9; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🎄 圣诞树合集</h1>
+    <p>6 款轻量网页圣诞树 · 纯前端可直接玩 · 来自 <a href="https://github.com/SaucePlum/christmasTree" target="_blank" rel="noopener">christmasTree 合集仓库</a>的网页版复刻</p>
+    <p><a href="/">← 返回圣诞树工作台</a></p>
+  </header>
+  <div class="grid">
+    <div class="card">
+      <div class="shot"><span class="badge">纯 CSS</span><iframe src="./demos/01-css-animated.html" loading="lazy" title="纯CSS动画圣诞树预览"></iframe></div>
+      <div class="meta">
+        <h2>① 纯CSS动画圣诞树</h2>
+        <p>经典三层三角树身，顶星呼吸闪烁、彩灯交替明灭、雪花漫天飘落，几乎零 JS。</p>
+        <a class="open" href="./demos/01-css-animated.html" target="_blank" rel="noopener">打开全屏 →</a>
+      </div>
+    </div>
+    <div class="card">
+      <div class="shot"><span class="badge">纯 CSS</span><iframe src="./demos/02-css-spiral.html" loading="lazy" title="纯CSS螺旋圣诞树预览"></iframe></div>
+      <div class="meta">
+        <h2>② 纯CSS螺旋圣诞树</h2>
+        <p>26 层发光横条自上而下递增交错摆动，绿→青→金渐变，灯泡独立延迟点亮成螺旋流光。</p>
+        <a class="open" href="./demos/02-css-spiral.html" target="_blank" rel="noopener">打开全屏 →</a>
+      </div>
+    </div>
+    <div class="card">
+      <div class="shot"><span class="badge">纯 CSS</span><iframe src="./demos/03-css-meteor.html" loading="lazy" title="纯CSS流星圣诞树预览"></iframe></div>
+      <div class="meta">
+        <h2>③ 纯CSS流星圣诞树</h2>
+        <p>青蓝辉光雪夜里的发光树，流星拖着长尾从右上划向左下，氛围感拉满。</p>
+        <a class="open" href="./demos/03-css-meteor.html" target="_blank" rel="noopener">打开全屏 →</a>
+      </div>
+    </div>
+    <div class="card">
+      <div class="shot"><span class="badge">纯 CSS</span><iframe src="./demos/04-css-globe.html" loading="lazy" title="纯CSS水晶球圣诞树预览"></iframe></div>
+      <div class="meta">
+        <h2>④ 纯CSS水晶球圣诞树</h2>
+        <p>玻璃球体+金色底座，球内小树与雪地、雪花循环飘落，摇一摇（其实不用摇）就是整个冬天。</p>
+        <a class="open" href="./demos/04-css-globe.html" target="_blank" rel="noopener">打开全屏 →</a>
+      </div>
+    </div>
+    <div class="card">
+      <div class="shot"><span class="badge">HTML+CSS+JS</span><iframe src="./demos/05-js-canvas.html" loading="lazy" title="HTML+CSS+JS圣诞树预览"></iframe></div>
+      <div class="meta">
+        <h2>⑤ HTML+CSS+JS 粒子圣诞树</h2>
+        <p>900 个粒子按锥面成树，鼠标扫过哪里哪里亮，点击画布还能亲手挂彩灯。</p>
+        <a class="open" href="./demos/05-js-canvas.html" target="_blank" rel="noopener">打开全屏 →</a>
+      </div>
+    </div>
+    <div class="card">
+      <div class="shot"><span class="badge">HTML+CSS+JS</span><iframe src="./demos/06-card.html" loading="lazy" title="圣诞树贺卡预览"></iframe></div>
+      <div class="meta">
+        <h2>⑥ 圣诞树贺卡</h2>
+        <p>红金配色可写祝福的电子贺卡：写下想说的话，点「盖上祝福」让心愿显影。</p>
+        <a class="open" href="./demos/06-card.html" target="_blank" rel="noopener">打开全屏 →</a>
+      </div>
+    </div>
+  </div>
+  <footer>源仓库 README 列有网页版 6 款但未上传源码，本页 6 款为按目录名复刻实现 · MIT</footer>
+</div>
+</body>
+</html>

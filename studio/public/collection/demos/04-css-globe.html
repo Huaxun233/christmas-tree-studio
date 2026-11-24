@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>纯CSS水晶球圣诞树 · Demo04</title>
+<meta name="robots" content="noindex">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { min-height:100vh; display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(160deg,#1a1030 0%,#0a0a20 100%); overflow:hidden; font-family:sans-serif; }
+/* 球体：圆形玻璃 + 内部雪景 */
+.globe { position:relative; width:380px; height:380px; border-radius:50%;
+  background:radial-gradient(circle at 35% 30%, rgba(255,255,255,.28) 0%, rgba(140,180,255,.10) 30%, rgba(20,40,90,.35) 100%);
+  border:2px solid rgba(180,210,255,.35); overflow:hidden;
+  box-shadow:0 0 60px rgba(100,150,255,.35), inset 0 0 40px rgba(255,255,255,.15); }
+/* 底座 */
+.base { width:300px; height:60px; margin:-14px auto 0; border-radius:16px 16px 26px 26px;
+  background:linear-gradient(180deg,#b98a3a 0%,#7a5a20 100%);
+  box-shadow:0 8px 24px rgba(0,0,0,.5); position:relative; }
+.base::after { content:"🎄 圣诞快乐"; position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  color:#fff2cc; letter-spacing:.4em; font-size:14px; font-weight:bold; }
+/* 球内雪地 */
+.snow-floor { position:absolute; bottom:0; left:0; right:0; height:64px; background:#f4f9ff; border-radius:50% 50% 0 0 / 28px 28px 0 0; }
+/* 球内小树 */
+.tree { position:absolute; bottom:44px; left:50%; transform:translateX(-50%); }
+.tri { position:relative; width:0; height:0; margin:0 auto;
+  border-left:34px solid transparent; border-right:34px solid transparent; border-bottom:64px solid #1d7a44; }
+.tri + .tri { margin-top:-22px; }
+.t2 { border-bottom-width:76px; border-left-width:40px; border-right-width:40px; }
+.t3 { border-bottom-width:88px; border-left-width:46px; border-right-width:46px; }
+.trunk { width:18px; height:12px; background:#5a3a1a; margin:0 auto; border-radius:0 0 4px 4px; }
+.star { position:absolute; top:-30px; left:50%; transform:translateX(-50%); font-size:24px; color:#ffd76a;
+  text-shadow:0 0 14px #ffd76a; animation:tw 1.6s ease-in-out infinite; }
+@keyframes tw { 50% { transform:translateX(-50%) scale(1.3); } }
+/* 球内雪花：玻璃腔体内循环下落 */
+.flake { position:absolute; top:-16px; color:#fff; opacity:.9; animation:fall linear infinite; }
+@keyframes fall { to { transform:translateY(420px) rotate(240deg); } }
+/* 球面高光 */
+.gloss { position:absolute; top:36px; left:60px; width:120px; height:56px; border-radius:50%;
+  background:radial-gradient(ellipse at center, rgba(255,255,255,.5) 0%, transparent 70%); transform:rotate(-18deg); }
+</style>
+</head>
+<body>
+<div>
+  <div class="globe">
+    <div class="gloss"></div>
+    <div class="snow-floor"></div>
+    <div class="tree">
+      <div class="star">★</div>
+      <div class="tri"></div><div class="tri t2"></div><div class="tri t3"></div>
+      <div class="trunk"></div>
+    </div>
+  </div>
+  <div class="base"></div>
+</div>
+<script>
+for (let i = 0; i < 34; i++) {
+  const f = document.createElement("div");
+  f.className = "flake"; f.textContent = "❄";
+  f.style.left = Math.random() * 96 + "%";
+  f.style.fontSize = 6 + Math.random() * 10 + "px";
+  f.style.animationDuration = 4 + Math.random() * 5 + "s";
+  f.style.animationDelay = -Math.random() * 8 + "s";
+  document.querySelector(".globe").appendChild(f);
+}
+</script>
+</body>
+</html>
