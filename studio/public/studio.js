@@ -137,10 +137,10 @@
     return c;
   }
 
-  // 题字是否留空不显示（空字符串传给服务端，由它决定不回退默认）
+  // 题字默认空白：不填就传空串（树上不放题字），不回退默认文案
   function titleValue() {
     if (blankTitle && blankTitle.checked) return "";
-    return titleInput.value.trim() || "亲爱的";
+    return titleInput.value.trim();
   }
 
   /* ---- 预览：sessionStorage 传配置（同源），iframe 加载后 boot 先于 app.js 执行 ---- */

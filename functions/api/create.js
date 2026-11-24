@@ -20,9 +20,8 @@ export async function onRequestPost(context) {
     ? [...new Set(c.blank.map(String))].filter(k => VALID_BLANK.includes(k))
     : [];
   // 题字留空 → title 存空串（分享页整块不显示），否则回退默认「亲爱的」
-  const title = blank.includes("title")
-    ? ""
-    : (String(body.title || "").trim().slice(0, 60) || "亲爱的");
+  // 题字默认空白：空串 → 分享页整块不显示；不再回退「亲爱的」
+  const title = String(body.title || "").trim().slice(0, 60);
   let photos = Array.isArray(body.photos) ? body.photos : [];
   photos = photos
     .filter(p => typeof p?.dataUrl === "string" && p.dataUrl.startsWith("data:image/"))

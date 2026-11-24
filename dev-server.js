@@ -111,7 +111,7 @@ const server = http.createServer((req, res) => {
     req.on("end", () => {
       try {
         const body = JSON.parse(Buffer.concat(chunks).toString("utf8"));
-        const title = String(body.title || "").slice(0, 60) || "亲爱的";
+        const title = String(body.title || "").slice(0, 60); // 题字默认空白
         const photos = Array.isArray(body.photos) ? body.photos.slice(0, 30) : [];
         if (photos.length === 0) return send(res, 400, "photos 至少一张");
         const id = crypto.randomBytes(6).toString("base64url").toLowerCase().replace(/[^a-z0-9]/g, "x").padEnd(10, "x").slice(0, 10);

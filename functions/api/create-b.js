@@ -13,7 +13,7 @@ export async function onRequestPost(context) {
   let body;
   try { body = await req.json(); } catch { return json({ error: "bad json" }, 400); }
 
-  const title = String(body.title || "").trim().slice(0, 60) || "亲爱的";
+  const title = String(body.title || "").trim().slice(0, 60); // 题字默认空白，不回退
   let photos = Array.isArray(body.photos) ? body.photos : [];
   photos = photos
     .filter(p => typeof p?.dataUrl === "string" && p.dataUrl.startsWith("data:image/"))
