@@ -36,7 +36,7 @@
 
     <div id="loader">
         <div class="spinner"></div>
-        <div class="loader-text">Loading Memories</div>
+        <div class="loader-text">正在加载回忆</div>
     </div>
 
     <div id="canvas-container"></div>
@@ -47,18 +47,18 @@
         <div class="controls-wrapper">
             <div class="btn-group">
                 <label class="upload-btn">
-                    Select Folder
+                    选择文件夹
                     <input type="file" id="folder-input" webkitdirectory directory multiple>
                 </label>
 
                 <label class="upload-btn">
-                    Select Files
+                    选择照片
                     <input type="file" id="file-input" multiple accept="image/*">
                 </label>
             </div>
             <div class="btn-group">
-                <button class="upload-btn" id="save-btn" type="button">Save Image</button>
-                <button class="upload-btn" id="help-btn" type="button">Controls</button>
+                <button class="upload-btn" id="save-btn" type="button">保存图片</button>
+                <button class="upload-btn" id="help-btn" type="button">操作说明</button>
             </div>
             <p class="hint-text">
                 拖拽旋转 · 滚轮缩放<br>
@@ -98,7 +98,7 @@
     <div id="webcam-wrapper">
         <video id="webcam" autoplay playsinline muted></video>
         <div id="debug-info">—</div>
-        <div id="status-info">Initializing…</div>
+        <div id="status-info">初始化中…</div>
     </div>
 
     <meta name="robots" content="noindex">
