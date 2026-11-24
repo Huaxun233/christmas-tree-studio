@@ -28,8 +28,8 @@
     hide.addEventListener("click", function (ev) {
       ev.preventDefault(); ev.stopPropagation();
       try { localStorage.setItem("studio_fab_hidden", "1"); } catch (e) {}
-      fab.style.display = "none";
-      hide.style.display = "none";
+      fab.remove();
+      hide.remove();
     });
     document.body.appendChild(fab);
     document.body.appendChild(hide);
