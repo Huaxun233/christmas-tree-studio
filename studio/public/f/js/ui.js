@@ -57,14 +57,14 @@ async function onSave(e) {
     const btn = e.currentTarget;
     const label = btn.textContent;
     btn.disabled = true;
-    btn.textContent = 'Saving…';
+    btn.textContent = '保存中…';
 
     try {
         const ok = await saveImage();
-        btn.textContent = ok ? 'Saved' : 'Failed';
+        btn.textContent = ok ? '已保存' : '保存失败';
     } catch (err) {
         console.error('[tree] 保存图片失败', err);
-        btn.textContent = 'Failed';
+        btn.textContent = '保存失败';
     }
 
     setTimeout(() => {
