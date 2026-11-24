@@ -133,9 +133,34 @@ if (!treeAppJs3.includes("STUDIO_WISHES")) {
 
 // 复制 studio 自有树页资源（先于校验）
 fs.copyFileSync(path.join(ROOT, "public-tree-assets", "studio-boot.js"), path.join(TREE, "studio-boot.js"));
+fs.copyFileSync(path.join(ROOT, "public-tree-assets", "studio-fab.js"), path.join(TREE, "studio-fab.js"));
+
+// 经典树页 index.html 引入「制作同款」可隐藏按钮（在 studio-boot 之后）
+{
+  const p = path.join(TREE, "index.html");
+  let t = fs.readFileSync(p, "utf8");
+  if (!t.includes("studio-fab.js")) {
+    t = t.replace('<script src="studio-boot.js"></script>', '<script src="studio-boot.js"></script>\n<script src="studio-fab.js"></script>');
+    fs.writeFileSync(p, t, "utf8");
+  }
+}
+// 璀璨树 index.html 引入同一按钮
+{
+  const p = path.join(PUB, "b", "index.html");
+  let t = fs.readFileSync(p, "utf8");
+  if (!t.includes("studio-fab.js")) {
+    t = t.replace('<script src="./boot.js"></script>', '<script src="./boot.js"></script>\n<script src="./studio-fab.js"></script>');
+    fs.writeFileSync(p, t, "utf8");
+  }
+}
+// 璀璨树目录放入按钮脚本（原版文件直接复用）
+{
+  const bDir = path.join(PUB, "b");
+  if (fs.existsSync(bDir)) fs.copyFileSync(path.join(ROOT, "public-tree-assets", "studio-fab.js"), path.join(bDir, "studio-fab.js"));
+}
 
 console.log("[4/4] 校验 ...");
-for (const f of ["index.html", "app.js", "vendor/three/three.module.js", "hand_landmarker.task", "studio-key.js", "studio-boot.js"]) {
+for (const f of ["index.html", "app.js", "vendor/three/three.module.js", "hand_landmarker.task", "studio-key.js", "studio-boot.js", "studio-fab.js"]) {
   if (!fs.existsSync(path.join(TREE, f))) { console.error("缺少 " + f); process.exit(1); }
 }
 

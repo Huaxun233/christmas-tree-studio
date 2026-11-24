@@ -92,13 +92,6 @@
     document.documentElement.appendChild(css);
     document.documentElement.classList.add("studio-lock");
 
-    var fab = document.createElement("a");
-    fab.href = "/"; fab.textContent = "✨ 制作同款"; fab.className = "studio-fab";
-    fab.style.cssText = "position:fixed;left:14px;bottom:14px;z-index:99999;display:inline-block;" +
-      "padding:10px 16px;border-radius:999px;background:rgba(255,255,255,.92);color:#c0392b;" +
-      "font:bold 14px/1 sans-serif;text-decoration:none;box-shadow:0 4px 14px rgba(0,0,0,.35);user-select:none;";
-    document.body.appendChild(fab);
-
     // 键盘：Esc / P 不许退出净屏
     var KEYS = { "Escape": 1, "p": 1, "P": 1 };
     document.addEventListener("keydown", function (ev) {
@@ -142,20 +135,8 @@
     return;
   }
 
-  // 「制作同款」悬浮按钮（普通访问 / 分享页都要；预览 iframe 中不显示）
+  // 「制作同款」悬浮按钮已由 studio-fab.js 统一处理（含可隐藏）
   if (!id) {
-    try {
-      var fab = document.createElement("a");
-      fab.href = "/";
-      fab.textContent = "✨ 制作同款";
-      fab.className = "studio-fab";
-      fab.style.cssText = "position:fixed;left:14px;bottom:14px;z-index:99999;" +
-        "display:inline-block;padding:10px 16px;border-radius:999px;" +
-        "background:rgba(255,255,255,.92);color:#c0392b;font:bold 14px/1 sans-serif;" +
-        "text-decoration:none;box-shadow:0 4px 14px rgba(0,0,0,.35);user-select:none;";
-      fab.addEventListener("touchstart", function () {}, { passive: true });
-      document.body.appendChild(fab);
-    } catch (e) {}
     return; // 普通访问：走原逻辑
   }
 
