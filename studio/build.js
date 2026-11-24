@@ -221,6 +221,14 @@ fs.copyFileSync(path.join(ROOT, "public-tree-assets", "studio-fab.js"), path.joi
       const hudA = 'className:"fixed inset-0 pointer-events-none z-20"';
       if (!b.includes(hudA)) { console.error("C bundle 找不到 HUD 根锚点"); process.exit(1); }
       b = b.replace(hudA, () => 'id:"c-hud",className:"fixed inset-0 pointer-events-none z-20"');
+      // ⑤ MediaPipe wasm/模型绝对路径 → 相对（/c/ 子目录下 /wasm、/models 会 404 卡加载）
+      const wasmA = 'oc.forVisionTasks("/wasm")';
+      if (b.includes(wasmA)) b = b.replace(wasmA, () => 'oc.forVisionTasks("./wasm")');
+      const modelA = 'modelAssetPath:"/models/gesture_recognizer.task"';
+      if (b.includes(modelA)) b = b.replace(modelA, () => 'modelAssetPath:"./models/gesture_recognizer.task"');
+      // ⑥ 3D 文字字体绝对路径 → 相对（troika 加载 /fonts 会 404 退化默认字体）
+      const fontA = 'font:"/fonts/Cinzel-Bold.ttf"';
+      if (b.includes(fontA)) b = b.split(fontA).join('font:"./fonts/Cinzel-Bold.ttf"');
       fs.writeFileSync(bp, b, "utf8");
     }
   }
