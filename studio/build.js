@@ -131,24 +131,6 @@ if (!treeAppJs3.includes("STUDIO_WISHES")) {
   fs.writeFileSync(appJsPath, treeAppJs3, "utf8");
 }
 
-// app.js 空题字补丁：初始化读 localStorage 后，分享页 (?id=) 且题字为空 → 隐藏整块 #dedication（树上不放名字牌）
-let treeAppJs5 = fs.readFileSync(appJsPath, "utf8");
-if (!treeAppJs5.includes("[studio] 空题字隐藏")) {
-  const anchor5 = "applyDedication(saved);";
-  const patch5 = anchor5 + `
-  // [studio] 空题字隐藏：分享页没填题字就不放名字牌（原版会回退「亲爱的」）
-  try {
-    const __isShare = new URLSearchParams(location.search).get("id");
-    if (__isShare && !dedicationText) {
-      const __d = document.getElementById("dedication");
-      if (__d) __d.style.setProperty("display", "none", "important");
-    }
-  } catch (__e) { /* 忽略 */ }`;
-  if (!treeAppJs5.includes(anchor5)) { console.error("app.js 中找不到题字初始化锚点，空题字补丁未应用"); process.exit(1); }
-  treeAppJs5 = treeAppJs5.replace(anchor5, patch5);
-  fs.writeFileSync(appJsPath, treeAppJs5, "utf8");
-}
-
 // 复制 studio 自有树页资源（先于校验）
 fs.copyFileSync(path.join(ROOT, "public-tree-assets", "studio-boot.js"), path.join(TREE, "studio-boot.js"));
 fs.copyFileSync(path.join(ROOT, "public-tree-assets", "studio-fab.js"), path.join(TREE, "studio-fab.js"));

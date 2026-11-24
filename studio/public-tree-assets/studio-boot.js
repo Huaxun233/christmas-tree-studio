@@ -148,6 +148,24 @@
       if (!data) return;
       if (typeof data.title === "string") applyTitle(data.title);
       applyCustom(data.custom);
+      // 题字留空：不放名字牌（原版初始化会回退「亲爱的」，需在 module 读取前清掉 + 渲染后隐藏）
+      var t = typeof data.title === "string" ? data.title.trim() : "";
+      if (!t) {
+        try { if (window.STUDIO_DEDICATION_KEY) localStorage.removeItem(window.STUDIO_DEDICATION_KEY); } catch (e) {}
+        // DOM 可能未就绪：等渲染后再隐藏（module 初始化也可能回写「亲爱的」，双保险 interval）
+        var hideDed = function () {
+          var d = document.getElementById("dedication");
+          if (d) d.style.setProperty("display", "none", "important");
+        };
+        if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", hideDed);
+        else setTimeout(hideDed, 0);
+        setTimeout(hideDed, 600);
+        var n = 0;
+        var iv = setInterval(function () {
+          hideDed();
+          if (++n > 6) clearInterval(iv);
+        }, 500);
+      }
     })
     .catch(function () {});
 })();
