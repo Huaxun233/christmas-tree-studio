@@ -10,6 +10,10 @@ import { json, tokenHash } from "../lib/http.js";
 
 const UNDO_MS = 3 * 60 * 1000; // 3 分钟内可撤销
 
+// 树类型 → KV 前缀（a=经典 tree/，b=璀璨 btree/，c=记忆漩涡 ctree/，d=手势 dtree/）
+const PREFIX_BY_TYPE = { a: "tree/", b: "btree/", c: "ctree/", d: "dtree/" };
+const prefixOf = it => PREFIX_BY_TYPE[it.type] || "tree/";
+
 async function handle(context, req) {
   const url = new URL(req.url);
   const token = (req.headers.get("x-owner-token") || url.searchParams.get("t") || "").trim();
@@ -27,7 +31,7 @@ async function handle(context, req) {
         .filter(it => it.oth && it.oth === oth)
         .map(it => ({
           id: it.id, title: it.title, photoCount: it.photoCount, createdAt: it.createdAt,
-          thumb: it.thumb, deletedAt: it.del || null, canUndo: !!it.del && Date.now() - it.del < UNDO_MS,
+          thumb: it.thumb, type: it.type || "a", deletedAt: it.del || null, canUndo: !!it.del && Date.now() - it.del < UNDO_MS,
         }));
       return json({ count: mine.length, trees: mine });
     }
@@ -44,7 +48,7 @@ async function handle(context, req) {
 
       if (action === "delete") {
         if (index[pos].del) return json({ ok: true, already: true, id });
-        const prefix = index[pos].type === "b" ? "btree/" : "tree/";
+        const prefix = prefixOf(index[pos]);
         const rec = await store.get(`${prefix}${id}`, { type: "json" });
         if (rec) await store.setJSON(`trash/${id}`, { ...rec, deletedAt: Date.now() });
         await store.delete(`${prefix}${id}`);
@@ -65,7 +69,7 @@ async function handle(context, req) {
         const rec = await store.get(`trash/${id}`, { type: "json" });
         if (!rec) return json({ error: "记录已不存在" }, 410);
         const { deletedAt, ...clean } = rec;
-        const prefix = index[pos].type === "b" ? "btree/" : "tree/";
+        const prefix = prefixOf(index[pos]);
         await store.setJSON(`${prefix}${id}`, clean);
         await store.delete(`trash/${id}`);
         const { del: _drop, ...rest } = index[pos];

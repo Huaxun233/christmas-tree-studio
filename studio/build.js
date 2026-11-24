@@ -179,9 +179,102 @@ fs.copyFileSync(path.join(ROOT, "public-tree-assets", "studio-fab.js"), path.joi
   }
 }
 
+// ===== C 型树（记忆漩涡，yftan）：路径改相对 + module 延迟 + bundle 补丁 =====
+{
+  const cDir = path.join(PUB, "c");
+  if (fs.existsSync(cDir)) {
+    // index.html：/assets/ 绝对路径 → ./assets/；module 标签换成 defer + c-boot 引导
+    const hp = path.join(cDir, "index.html");
+    let t = fs.readFileSync(hp, "utf8");
+    if (!t.includes("c-boot.js")) {
+      t = t.split('src="/assets/').join('src="./assets/');
+      t = t.split('href="/assets/').join('href="./assets/');
+      const modTag = t.match(/<script type="module" crossorigin src="\.\/assets\/[^"]+"><\/script>/);
+      if (!modTag) { console.error("C index.html 找不到 module 标签"); process.exit(1); }
+      const src = modTag[0].match(/src="([^"]+)"/)[1];
+      t = t.replace(modTag[0],
+        '<meta name="robots" content="noindex">\n' +
+        '<script type="text/x-module-defer" data-src="' + src + '"></script>\n' +
+        '<script src="./c-boot.js"></script>\n<script src="./studio-fab.js"></script>');
+      fs.writeFileSync(hp, t, "utf8");
+    }
+    fs.copyFileSync(path.join(ROOT, "public-tree-assets", "studio-fab.js"), path.join(cDir, "studio-fab.js"));
+
+    // bundle 补丁（一次性，打过的文件已含 __C_NAMES 标记）
+    const bp = path.join(cDir, "assets", "index-DBC90deG.js");
+    let b = fs.readFileSync(bp, "utf8");
+    if (!b.includes("__C_NAMES")) {
+      // ① 照片文件名数组：boot 注入 __C_NAMES 时用它，否则回落原 24 张（本地图缺失）
+      const arrM = b.match(/const H=(\["2024_06_1\.jpg"[^\]]*\]);H\.sort\(\);/);
+      if (!arrM) { console.error("C bundle 找不到照片数组锚点"); process.exit(1); }
+      b = b.replace(arrM[0], () =>
+        'const H=(globalThis.__C_NAMES&&globalThis.__C_NAMES.length?globalThis.__C_NAMES:' + arrM[1] + ');H.sort();');
+      // ② 纹理 URL：优先查 __C_URLS（"/photos/<名>" → dataUrl），否则原路径
+      const urlA = "Be=`/photos/${J}`;";
+      if (!b.includes(urlA)) { console.error("C bundle 找不到 /photos/${J} 锚点"); process.exit(1); }
+      b = b.replace(urlA, () => 'Be=(globalThis.__C_URLS&&globalThis.__C_URLS["/photos/"+J])||`/photos/${J}`;');
+      // ③ picsum 随机网图兜底：默认留白必须关掉（__C_URLS 没有该图就直接放弃）
+      const picA = 'p=>{console.warn(`⚠️ Local image not found: ${t}, loading random photo...`);';
+      if (!b.includes(picA)) { console.error("C bundle 找不到 picsum 回退锚点"); process.exit(1); }
+      b = b.replace(picA, () => 'p=>{if(!(globalThis.__C_URLS&&globalThis.__C_URLS[t]))return;console.warn(`⚠️ Local image not found: ${t}, loading random photo...`);');
+      // ④ HUD 文字层加 id（一键清屏用）
+      const hudA = 'className:"fixed inset-0 pointer-events-none z-20"';
+      if (!b.includes(hudA)) { console.error("C bundle 找不到 HUD 根锚点"); process.exit(1); }
+      b = b.replace(hudA, () => 'id:"c-hud",className:"fixed inset-0 pointer-events-none z-20"');
+      fs.writeFileSync(bp, b, "utf8");
+    }
+  }
+}
+
+// ===== D 型树（手势圣诞树，fuguther）：module 延迟 + 信息面板加 id =====
+{
+  const dDir = path.join(PUB, "d");
+  if (fs.existsSync(dDir)) {
+    const hp = path.join(dDir, "index.html");
+    let t = fs.readFileSync(hp, "utf8");
+    if (!t.includes("d-boot.js")) {
+      const modTag = t.match(/<script type="module" crossorigin src="\.\/assets\/[^"]+"><\/script>/);
+      if (!modTag) { console.error("D index.html 找不到 module 标签"); process.exit(1); }
+      const src = modTag[0].match(/src="([^"]+)"/)[1];
+      t = t.replace(modTag[0],
+        '<meta name="robots" content="noindex">\n' +
+        '<script type="text/x-module-defer" data-src="' + src + '"></script>\n' +
+        '<script src="./d-boot.js"></script>\n<script src="./studio-fab.js"></script>');
+      fs.writeFileSync(hp, t, "utf8");
+    }
+    fs.copyFileSync(path.join(ROOT, "public-tree-assets", "studio-fab.js"), path.join(dDir, "studio-fab.js"));
+
+    const bp = path.join(dDir, "assets", "index-DHT1CRUH.js");
+    let b = fs.readFileSync(bp, "utf8");
+    if (!b.includes("d-info-panel")) {
+      const panA = 'className:"bg-black/60 backdrop-blur-md p-4 rounded-xl border border-white/10 shadow-xl"';
+      if (!b.includes(panA)) { console.error("D bundle 找不到信息面板锚点"); process.exit(1); }
+      b = b.replace(panA, () => 'id:"d-info-panel",className:"bg-black/60 backdrop-blur-md p-4 rounded-xl border border-white/10 shadow-xl"');
+      fs.writeFileSync(bp, b, "utf8");
+    }
+  }
+}
+
 console.log("[4/4] 校验 ...");
 for (const f of ["index.html", "app.js", "vendor/three/three.module.js", "hand_landmarker.task", "studio-key.js", "studio-boot.js", "studio-fab.js"]) {
   if (!fs.existsSync(path.join(TREE, f))) { console.error("缺少 " + f); process.exit(1); }
+}
+// C/D 型校验
+for (const [dir, boot, marker] of [
+  ["c", "c-boot.js", "__C_NAMES"],
+  ["d", "d-boot.js", "d-info-panel"],
+]) {
+  const base = path.join(PUB, dir);
+  for (const f of ["index.html", boot, "studio-fab.js"]) {
+    if (!fs.existsSync(path.join(base, f))) { console.error("缺少 /" + dir + "/" + f); process.exit(1); }
+  }
+  if (dir === "c") {
+    const b = fs.readFileSync(path.join(base, "assets", "index-DBC90deG.js"), "utf8");
+    if (!b.includes(marker)) { console.error("C bundle 补丁缺失"); process.exit(1); }
+  } else {
+    const b = fs.readFileSync(path.join(base, "assets", "index-DHT1CRUH.js"), "utf8");
+    if (!b.includes(marker)) { console.error("D bundle 补丁缺失"); process.exit(1); }
+  }
 }
 
 // 替换站长 GitHub 主页占位符（发布前由本脚本统一写入）

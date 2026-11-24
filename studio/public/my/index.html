@@ -248,7 +248,8 @@
     } else {
       var open = document.createElement("a");
       open.className = "mini";
-      open.href = "/tree/?id=" + encodeURIComponent(tree.id);
+      var openPrefix = { a: "/tree/", b: "/b/", c: "/c/", d: "/d/" }[tree.type] || "/tree/";
+      open.href = openPrefix + "?id=" + encodeURIComponent(tree.id);
       open.target = "_blank"; open.rel = "noopener"; open.textContent = "打开";
       var del = document.createElement("button");
       del.className = "mini danger"; del.textContent = "删除";

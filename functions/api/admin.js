@@ -23,9 +23,10 @@ async function handle(context, req) {
     if (req.method === "GET") {
       let index = await store.get("index", { type: "json" });
       if (!index) {
-        // 首次：扫描已有 tree/* 与 btree/* 重建索引
+        // 首次：扫描全部类型前缀重建索引（a=tree/ b=btree/ c=ctree/ d=dtree/）
+        const TYPE_BY_PREFIX = { "tree/": "a", "btree/": "b", "ctree/": "c", "dtree/": "d" };
         const all = [];
-        for (const prefix of ["tree/", "btree/"]) {
+        for (const prefix of Object.keys(TYPE_BY_PREFIX)) {
           const { blobs } = await store.list({ prefix });
           for (const b of blobs) all.push(b);
         }
@@ -33,13 +34,14 @@ async function handle(context, req) {
         for (const b of all) {
           const rec = await store.get(b.key, { type: "json" });
           if (!rec) continue;
+          const prefix = b.key.replace(/^(tree|btree|ctree|dtree)\/.*/, "$1/") || "tree/";
           index.push({
-            id: b.key.replace(/^(b)?tree\//, ""),
+            id: b.key.replace(/^(b|c|d)?tree\//, ""),
             title: rec.title || "",
             photoCount: (rec.photos || []).length,
             createdAt: rec.createdAt || 0,
             thumb: (rec.photos && rec.photos[0] && rec.photos[0].dataUrl) || "",
-            ...(b.key.startsWith("btree/") ? { type: "b" } : {}),
+            type: rec.type || TYPE_BY_PREFIX[prefix] || "a",
           });
         }
         index.sort((a, b) => b.createdAt - a.createdAt);
@@ -65,7 +67,7 @@ async function handle(context, req) {
       if (action === "delete" || action === "hard_delete") {
         const id = String(body.id || "");
         if (!/^[a-z0-9]{6,32}$/i.test(id)) return json({ error: "id 不合法" }, 400);
-        for (const k of [`tree/${id}`, `btree/${id}`, `trash/${id}`]) { try { await store.delete(k); } catch {} }
+        for (const k of [`tree/${id}`, `btree/${id}`, `ctree/${id}`, `dtree/${id}`, `trash/${id}`]) { try { await store.delete(k); } catch {} }
         index = index.filter(it => it.id !== id);
         await store.setJSON("index", index);
         return json({ ok: true, hard: action === "hard_delete", deleted: id, remaining: index.length });
@@ -73,7 +75,7 @@ async function handle(context, req) {
 
       if (action === "clear") {
         let removed = 0;
-        for (const prefix of ["tree/", "btree/", "trash/"]) {
+        for (const prefix of ["tree/", "btree/", "ctree/", "dtree/", "trash/"]) {
           const { blobs } = await store.list({ prefix });
           for (const b of blobs) { await store.delete(b.key); removed++; }
         }

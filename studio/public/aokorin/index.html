@@ -118,7 +118,7 @@ function render(data) {
     var meta = document.createElement("div");
     meta.className = "meta";
     var t1 = document.createElement("div");
-    t1.className = "title"; t1.textContent = (t.type === "b" ? "✨ " : "🎄 ") + (t.title || "（无题字）");
+    t1.className = "title"; t1.textContent = ({ a: "🎄 ", b: "✨ ", c: "🌌 ", d: "🫱 " }[t.type] || "🎄 ") + (t.title || "（无题字）");
     var t2 = document.createElement("div");
     t2.className = "sub";
     t2.textContent = t.id + " · " + (t.photoCount || 0) + " 张照片 · " + fmtTime(t.createdAt)
@@ -128,7 +128,7 @@ function render(data) {
     row.appendChild(meta);
 
     var open = document.createElement("a");
-    open.className = "open"; open.href = (t.type === "b" ? "/b/?id=" : "/tree/?id=") + t.id; open.target = "_blank"; open.rel = "noopener";
+    open.className = "open"; open.href = ({ a: "/tree/?id=", b: "/b/?id=", c: "/c/?id=", d: "/d/?id=" }[t.type] || "/tree/?id=") + t.id; open.target = "_blank"; open.rel = "noopener";
     open.textContent = "打开";
     row.appendChild(open);
 

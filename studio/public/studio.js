@@ -62,9 +62,17 @@
   });
   function applyTypeUI() {
     var isB = treeType === "b";
+    var isC = treeType === "c";
+    var isD = treeType === "d";
     if (advArea) advArea.style.display = isB ? "none" : "block";
     var bTextArea = $("b-text-area");
     if (bTextArea) bTextArea.style.display = isB ? "block" : "none";
+    var cdTextArea = $("cd-text-area");
+    if (cdTextArea) cdTextArea.style.display = (isC || isD) ? "block" : "none";
+    // D 型没有照片功能：隐藏上传区
+    if (uploadZone) uploadZone.style.display = isD ? "none" : "block";
+    if (thumbs) thumbs.style.display = isD ? "none" : "block";
+    if (countEl) countEl.textContent = isD ? "" : countEl.textContent;
     if (bNote) bNote.style.display = "none"; // 已有 B 型专属文字自定义，不再提示
   }
 
@@ -81,6 +89,10 @@
     var el = $(id);
     if (el) el.addEventListener("input", updatePreview);
   });
+
+  // C/D 型横幅副行
+  var cdSubInput = $("cdsub-input");
+  if (cdSubInput) cdSubInput.addEventListener("input", updatePreview);
 
   /* ---- 照片压缩 ---- */
   function compress(file) {
@@ -170,9 +182,17 @@
         photos: photos.map(function (p) { return { name: p.name, dataUrl: p.dataUrl }; }),
       };
       var isB = treeType === "b";
+      var isC = treeType === "c";
+      var isD = treeType === "d";
       if (isB) cfg.custom = collectBCustom();
-      try { sessionStorage.setItem(isB ? "studio_preview_b" : "studio_preview", JSON.stringify(cfg)); } catch (e) {}
-      preview.src = (isB ? "./b/?preview=1" : "./tree/?preview=1") + "&t=" + Date.now();
+      if (isC || isD) {
+        cfg.custom = { sub: (cdSubInput && cdSubInput.value.trim()) || "" };
+        if (isD) cfg.photos = []; // D 型无照片
+      }
+      var pkey = isB ? "studio_preview_b" : (isC ? "studio_preview_c" : (isD ? "studio_preview_d" : "studio_preview"));
+      try { sessionStorage.setItem(pkey, JSON.stringify(cfg)); } catch (e) {}
+      var pdir = isB ? "b" : (isC ? "c" : (isD ? "d" : "tree"));
+      preview.src = "./" + pdir + "/?preview=1&t=" + Date.now();
     }, 400);
   }
 
@@ -204,16 +224,20 @@
     resultBox.classList.remove("show");
     try {
       var isB = treeType === "b";
-      var res = await fetch(isB ? "/api/create-b" : "/api/create", {
+      var isC = treeType === "c";
+      var isD = treeType === "d";
+      var api = isB ? "/api/create-b" : (isC ? "/api/create-c" : (isD ? "/api/create-d" : "/api/create"));
+      var custom = isB ? collectBCustom() : ((isC || isD) ? { sub: (cdSubInput && cdSubInput.value.trim()) || "" } : collectCustom());
+      var res = await fetch(api, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ title: titleValue(), photos: photos, custom: isB ? collectBCustom() : collectCustom() }),
+        body: JSON.stringify({ title: titleValue(), photos: isD ? [] : photos, custom: custom }),
       });
       var data = await res.json();
       if (!res.ok) throw new Error(data.error || ("HTTP " + res.status));
       saveMyTree(data);
       var qr = qrDataUrl(data.url);
-      var typeLabel = isB ? "✨ 璀璨圣诞树" : "🎄 经典圣诞树";
+      var typeLabel = isB ? "✨ 璀璨圣诞树" : (isC ? "🌌 记忆漩涡树" : (isD ? "🫱 手势圣诞树" : "🎄 经典圣诞树"));
       resultBox.innerHTML =
         typeLabel + " 生成成功！永久链接：<br><a href=\"" + data.url + "\" target=\"_blank\" rel=\"noopener\">" + data.url + "</a><br>" +
         "<span style=\"color:var(--dim);font-size:12px\">点开即可玩，分享给朋友也用这条链接；长按二维码可保存/识别</span><br>" +

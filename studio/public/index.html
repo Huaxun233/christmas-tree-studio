@@ -155,15 +155,25 @@
         <span class="type-name">✨ 璀璨圣诞树</span>
         <small>金色题字横幅 · 照片礼盒 · 星光漂浮 · 双模式</small>
       </label>
+      <label class="type-opt">
+        <input type="radio" name="tree-type" value="c">
+        <span class="type-name">🌌 记忆漩涡树</span>
+        <small>照片悬浮星环 · 手势捏取 · 科幻 HUD</small>
+      </label>
+      <label class="type-opt">
+        <input type="radio" name="tree-type" value="d">
+        <span class="type-name">🫱 手势圣诞树</span>
+        <small>手势点亮 · 三主题切换 · 无需照片</small>
+      </label>
     </div>
 
     <h2 style="margin-top:18px">② 定制内容</h2>
-    <label for="title-input">题字（经典=树旁牌子 · 璀璨=顶部金色横幅）</label>
+    <label for="title-input" id="title-label">题字（经典=树旁牌子 · 璀璨/记忆/手势=顶部横幅）</label>
     <div class="field-wrap" id="title-wrap">
       <input type="text" id="title-input" maxlength="60" placeholder="树上的名字（可留空）" value="">
     </div>
     <label class="blank-opt"><input type="checkbox" id="blank-title"><span>牌子上不放名字（题字留空）</span></label>
-    <div class="hint">最多 60 字，支持中文与英文。</div>
+    <div class="hint">最多 60 字，支持中文与英文。留空则不显示题字。</div>
 
     <div id="adv-area">
     <button type="button" class="mini-btn" id="adv-toggle" style="margin-top:14px">▸ 更多文字自定义</button>
@@ -207,6 +217,13 @@
       <div class="hint">留空则使用默认文案。右下角 👉 👁 按钮可一键清屏（隐藏所有文字）。</div>
     </div>
     <div class="hint" id="b-note" style="display:none">璀璨圣诞树没有心愿短句等文字自定义，题字会显示为树顶金色横幅。</div>
+    <div id="cd-text-area" style="display:none">
+      <label for="cdsub-input" style="margin-top:14px" id="cdsub-label">横幅副行（记忆=树名下方小字 · 手势=标题下方小字）</label>
+      <div class="field-wrap" id="cdsub-wrap">
+        <input type="text" id="cdsub-input" maxlength="40" placeholder="副行小字（可留空）">
+      </div>
+      <div class="hint">留空则不显示副行。右下角 👁 按钮可一键清屏（隐藏所有文字）。</div>
+    </div>
 
     <div class="upload" id="upload-zone">
       📷 点这里或把照片拖进来<br>

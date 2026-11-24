@@ -13,3 +13,4 @@ deploy-api.ps1
 tmp-*.json
 tmp-*.mjs
 dev-cf.*
+tmp-e2e-*.js
