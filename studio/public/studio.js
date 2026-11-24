@@ -63,8 +63,24 @@
   function applyTypeUI() {
     var isB = treeType === "b";
     if (advArea) advArea.style.display = isB ? "none" : "block";
-    if (bNote) bNote.style.display = isB ? "block" : "none";
+    var bTextArea = $("b-text-area");
+    if (bTextArea) bTextArea.style.display = isB ? "block" : "none";
+    if (bNote) bNote.style.display = "none"; // 已有 B 型专属文字自定义，不再提示
   }
+
+  // B 型树顶部文字：留空用默认
+  function collectBCustom() {
+    var g = function (id) { var el = $(id); return el ? el.value.trim() : ""; };
+    var c = {};
+    if (g("bsmall-input")) c.small = g("bsmall-input");
+    if (g("btitle-input")) c.title = g("btitle-input");
+    if (g("bsub-input")) c.sub = g("bsub-input");
+    return Object.keys(c).length ? c : undefined;
+  }
+  ["bsmall-input", "btitle-input", "bsub-input"].forEach(function (id) {
+    var el = $(id);
+    if (el) el.addEventListener("input", updatePreview);
+  });
 
   /* ---- 照片压缩 ---- */
   function compress(file) {
@@ -154,6 +170,7 @@
         photos: photos.map(function (p) { return { name: p.name, dataUrl: p.dataUrl }; }),
       };
       var isB = treeType === "b";
+      if (isB) cfg.custom = collectBCustom();
       try { sessionStorage.setItem(isB ? "studio_preview_b" : "studio_preview", JSON.stringify(cfg)); } catch (e) {}
       preview.src = (isB ? "./b/?preview=1" : "./tree/?preview=1") + "&t=" + Date.now();
     }, 400);
@@ -190,7 +207,7 @@
       var res = await fetch(isB ? "/api/create-b" : "/api/create", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ title: titleValue(), photos: photos, custom: isB ? undefined : collectCustom() }),
+        body: JSON.stringify({ title: titleValue(), photos: photos, custom: isB ? collectBCustom() : collectCustom() }),
       });
       var data = await res.json();
       if (!res.ok) throw new Error(data.error || ("HTTP " + res.status));

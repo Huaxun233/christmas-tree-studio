@@ -1,5 +1,5 @@
 // functions/api/create-b.js — 生成璀璨树（镜像版）：POST /api/create-b（CF 版）
-// body: { title, photos: [{name, dataUrl}] }
+// body: { title, photos: [{name, dataUrl}], custom: {small, title, sub} }
 // 存 KV btree/{id}，返回 { id, url, ownerToken }
 import { getStore } from "../lib/store.js";
 import { json, randomHex, tokenHash, newId } from "../lib/http.js";
@@ -20,7 +20,18 @@ export async function onRequestPost(context) {
     .slice(0, MAX_PHOTOS)
     .map(p => ({ name: String(p.name || "").slice(0, 40), dataUrl: p.dataUrl }));
 
-  const size = JSON.stringify({ title, photos }).length;
+  // 顶部文字自定义（璀璨树）：小字 / 大标题 / 副行，留空用默认
+  const c = body.custom && typeof body.custom === "object" ? body.custom : {};
+  const custom = {};
+  const small = String(c.small || "").trim().slice(0, 40);
+  const bigTitle = String(c.title || "").trim().slice(0, 60);
+  const sub = String(c.sub || "").trim().slice(0, 40);
+  if (small) custom.small = small;
+  if (bigTitle) custom.title = bigTitle;
+  if (sub) custom.sub = sub;
+  const hasCustom = Object.keys(custom).length > 0;
+
+  const size = JSON.stringify({ title, photos, custom }).length;
   if (size > MAX_BODY_BYTES) return json({ error: "内容过大，请减少照片数量或尺寸" }, 413);
 
   const id = newId();
@@ -28,7 +39,7 @@ export async function onRequestPost(context) {
 
   try {
     const store = getStore(context.env.TREES);
-    await store.setJSON(`btree/${id}`, { title, photos, createdAt: Date.now(), ownerToken, type: "b" });
+    await store.setJSON(`btree/${id}`, { title, photos, createdAt: Date.now(), ownerToken, type: "b", ...(hasCustom ? { custom } : {}) });
     // 维护管理索引（最新在最前）。索引里只放 token 的哈希前缀，不放明文。
     try {
       const oth = await tokenHash(ownerToken);

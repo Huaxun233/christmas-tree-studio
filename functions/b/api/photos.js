@@ -19,6 +19,7 @@ export async function onRequestGet(context) {
 
   return json({
     title: tree.title || "",
+    custom: tree.custom || null,
     photos: (tree.photos || []).map(p => ({ url: p.dataUrl, name: p.name || "" })),
   });
 }

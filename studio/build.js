@@ -159,6 +159,26 @@ fs.copyFileSync(path.join(ROOT, "public-tree-assets", "studio-fab.js"), path.joi
   if (fs.existsSync(bDir)) fs.copyFileSync(path.join(ROOT, "public-tree-assets", "studio-fab.js"), path.join(bDir, "studio-fab.js"));
 }
 
+// 璀璨树顶部文字自定义补丁：三个硬编码 children 改为读 window.__B_CUSTOM（boot.js 注入），
+// 并给顶栏根 div 加 id="b-top-text"（供一键清屏 CSS 隐藏）。
+{
+  const p = path.join(PUB, "b", "assets", "index-CZPyPNXc.js");
+  let t = fs.readFileSync(p, "utf8");
+  if (!t.includes("__B_CUSTOM")) {
+    const reps = [
+      ['children:"CHRISTMAS EVE IS COMING"', 'children:window.__B_CUSTOM&&window.__B_CUSTOM.small||"CHRISTMAS EVE IS COMING"'],
+      ['tracking-tight drop-shadow-lg",children:"Merry Christmas"', 'tracking-tight drop-shadow-lg",children:window.__B_CUSTOM&&window.__B_CUSTOM.title||"Merry Christmas"'],
+      ['children:"璀璨圣诞树 · 点亮冬日心愿"', 'children:window.__B_CUSTOM&&window.__B_CUSTOM.sub||"璀璨圣诞树 · 点亮冬日心愿"'],
+      ['return re.jsxs("div",{className:"absolute inset-0 pointer-events-none z-10 flex flex-col justify-between p-6 md:p-8"', 'return re.jsxs("div",{id:"b-top-text",className:"absolute inset-0 pointer-events-none z-10 flex flex-col justify-between p-6 md:p-8"'],
+    ];
+    for (const [anc, rep] of reps) {
+      if (!t.includes(anc)) { console.error("璀璨树 bundle 找不到锚点: " + anc.slice(0, 50)); process.exit(1); }
+      t = t.replace(anc, rep);
+    }
+    fs.writeFileSync(p, t, "utf8");
+  }
+}
+
 console.log("[4/4] 校验 ...");
 for (const f of ["index.html", "app.js", "vendor/three/three.module.js", "hand_landmarker.task", "studio-key.js", "studio-boot.js", "studio-fab.js"]) {
   if (!fs.existsSync(path.join(TREE, f))) { console.error("缺少 " + f); process.exit(1); }

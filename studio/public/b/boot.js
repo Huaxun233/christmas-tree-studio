@@ -81,12 +81,47 @@
     else document.addEventListener("DOMContentLoaded", make);
   }
 
+  // ===== 一键清屏：右下角 👁 按钮，toggle 隐藏顶部文字区 + 题字横幅 =====
+  function setupCleanToggle() {
+    var make = function () {
+      if (document.getElementById("b-clean-btn")) return;
+      var btn = document.createElement("button");
+      btn.id = "b-clean-btn";
+      btn.textContent = "👁";
+      btn.title = "一键清屏 / 恢复文字";
+      btn.setAttribute("style",
+        "position:fixed;right:14px;bottom:14px;width:38px;height:38px;border-radius:50%;" +
+        "border:1px solid rgba(255,217,138,.35);background:rgba(0,0,0,.45);color:#ffd98a;" +
+        "font-size:16px;cursor:pointer;z-index:2147482900;backdrop-filter:blur(4px);" +
+        "transition:opacity .2s;line-height:1;padding:0;");
+      btn.addEventListener("click", function () {
+        var on = document.documentElement.classList.toggle("b-clean");
+        btn.style.opacity = on ? ".45" : "1";
+      });
+      document.body.appendChild(btn);
+      var css = document.createElement("style");
+      css.textContent =
+        "html.b-clean #b-top-text{opacity:0!important;visibility:hidden!important}" +
+        "html.b-clean #b-title-banner{display:none!important}";
+      document.head.appendChild(css);
+    };
+    if (document.body) make();
+    else document.addEventListener("DOMContentLoaded", make);
+  }
+  setupCleanToggle();
+
+  // ===== 顶部文字自定义：window.__B_CUSTOM = {small, title, sub}（须在 module 加载前写入）=====
+  function applyBCustom(custom) {
+    if (custom && typeof custom === "object") window.__B_CUSTOM = custom;
+  }
+
   if (PREVIEW) {
     // 工作台实时预览：sessionStorage studio_preview_b = {title, photos}
     var cfg = null;
     try { cfg = JSON.parse(sessionStorage.getItem("studio_preview_b") || "null"); } catch (e) {}
     var photos = (cfg && cfg.photos) || [];
     var title = (cfg && cfg.title) || "";
+    applyBCustom(cfg && cfg.custom);
     showBanner(title);
     injectPhotos(photos)
       .then(function (n) {
@@ -101,6 +136,7 @@
   fetch("/b/api/photos?id=" + encodeURIComponent(ID))
     .then(function (r) { if (!r.ok) throw new Error("photos " + r.status); return r.json(); })
     .then(function (data) {
+      applyBCustom(data.custom);
       showBanner(data.title);
       return injectPhotos(data.photos);
     })
