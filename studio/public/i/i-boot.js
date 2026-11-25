@@ -17,6 +17,22 @@
     loadPhotos(d.photos || []);
   }).catch(function () {});
 
+  // 👁 清屏：隐藏标题/按钮组/手势面板，再点一次恢复
+  function initClean() {
+    if (document.getElementById("i-clean-btn")) return;
+    var btn = document.createElement("button");
+    btn.id = "i-clean-btn";
+    btn.type = "button";
+    btn.title = "净屏切换";
+    btn.textContent = "👁";
+    btn.addEventListener("click", function () {
+      document.documentElement.classList.toggle("i-clean");
+    });
+    document.body.appendChild(btn);
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initClean);
+  else initClean();
+
   function applyTitle(t) {
     var h1 = document.querySelector("h1[data-i-title]") || document.querySelector("h1");
     if (!h1) return;

@@ -262,6 +262,17 @@ body{
 #stage.ui-hide #uiPeek:hover,
 #stage.ui-hide #uiPeek.show{opacity:.95;}
 #stage.ui-hide #uiPeek svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.4;}
+/* ---------- 分享页清屏 ---------- */
+html.i-clean h1[data-i-title]{opacity:0;pointer-events:none;}
+html.i-clean .dock{opacity:0;pointer-events:none;}
+html.i-clean .drawer{opacity:0;pointer-events:none;}
+html.i-clean .gesture{opacity:0;pointer-events:none;}
+html.i-clean #uiPeek{opacity:0;pointer-events:none;}
+html.i-clean #handStateBox{opacity:0;pointer-events:none;}
+#i-clean-btn{position:fixed;right:16px;bottom:16px;z-index:9999;width:42px;height:42px;border-radius:50%;border:1px solid rgba(255,255,255,.28);background:rgba(8,20,34,.62);color:#eaf2f8;font-size:19px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(6px);transition:opacity .2s,transform .2s;}
+#i-clean-btn:hover{opacity:1;transform:scale(1.06);}
+html.i-clean #i-clean-btn{opacity:.28;}
+html.i-clean #i-clean-btn:hover{opacity:.95;}
 /* ---------- 手势识别面板 ---------- */
 .gesture{
   position:absolute;
@@ -2211,6 +2222,10 @@ body{
     g.drawImage(cv, 0, 0, c2.width, c2.height);
     done(c2);
   }
+
+  // [studio] 暴露给 i-boot.js：分享/预览时把照片画进树
+  window.addPhotoCanvas = addPhotoCanvas;
+  window.__I_PHOTO_MAX = PHOTO_MAX;
 
   function loadImageFromBlob(blob, persist){
     function accept(cv){
