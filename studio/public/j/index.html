@@ -815,10 +815,8 @@
     var atlasCanvasEl = null, atlasTexRef = null;
     // 访客拍照后：把最近的照片画进 atlas 替换占位图
     window.__cyberTreeAddPhoto = function (img) {
-      var cv = document.createElement('canvas'); cv.width = img.naturalWidth || img.width || 512; cv.height = img.naturalHeight || img.height || 512;
-      cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
-      photoPool.push(cv); shownIdx = [];
-      if (photoPool.length) window.__cyberTreeUpdateAtlas(photoPool.slice(-4));
+      // [studio] photoPool 在 module 作用域，这里只入队，由 module 侧 flush
+      (window.__cyberTreePhotoQueue = window.__cyberTreePhotoQueue || []).push(img);
     };
     window.__cyberTreeUpdateAtlas = function (photoCanvases) {
       if (!atlasCanvasEl) return;
@@ -1289,6 +1287,24 @@ function makeEmptyFrame() {
 const photoPool = [];       // 访客拍的照片
 let shownIdx = [];          // 本轮已展示过的索引
 let lastShot = 0;
+
+// [studio] 分享注入：照片从 j-boot 进入 module 作用域的 photoPool
+window.__cyberTreeAddPhotoReal = function (img) {
+  var cv = document.createElement('canvas'); cv.width = img.naturalWidth || img.width || 512; cv.height = img.naturalHeight || img.height || 512;
+  cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+  photoPool.push(cv); shownIdx = [];
+  if (photoPool.length) window.__cyberTreeUpdateAtlas(photoPool.slice(-4));
+};
+window.__cyberTreeAddPhoto = function (img) {
+  (window.__cyberTreePhotoQueue = window.__cyberTreePhotoQueue || []).push(img);
+  flushCyberQueue();
+};
+function flushCyberQueue() {
+  var q = window.__cyberTreePhotoQueue || [];
+  window.__cyberTreePhotoQueue = [];
+  q.forEach(function (im2) { window.__cyberTreeAddPhotoReal(im2); });
+}
+flushCyberQueue();
 
 // 比耶：食指 + 中指伸直，无名指 + 小指弯曲
 function isPeace(lm) {
