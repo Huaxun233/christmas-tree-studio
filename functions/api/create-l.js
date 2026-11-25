@@ -45,7 +45,7 @@ export async function onRequestPost(context) {
   }
 
   const origin = new URL(req.url).origin;
-  return json({ id, url: `${origin}/h/?id=${id}`, ownerToken });
+  return json({ id, url: `${origin}/l/?id=${id}`, ownerToken });
 }
 
 export async function onRequestGet(context) {
