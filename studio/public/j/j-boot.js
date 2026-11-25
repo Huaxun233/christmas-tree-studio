@@ -5,7 +5,7 @@
   if (P.get("preview") === "1") {
     try {
       var raw = sessionStorage.getItem("studio_preview_j");
-      if (raw) { var cfg = JSON.parse(raw); applyTitle(cfg.title); loadPhotos(cfg.photos || []); }
+      if (raw) { var cfg = JSON.parse(raw); applyTitle(cfg.title); loadPhotos((cfg.photos || []).map(function (p) { return p.dataUrl || p.url; })); }
     } catch (e) {}
     return;
   }
@@ -31,7 +31,7 @@
         var im = new Image();
         im.crossOrigin = "anonymous";
         im.onload = function () { window.__cyberTreeAddPhoto(im); };
-        im.src = p.url;
+        im.src = p.dataUrl || p.url;
       });
     }
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", drain);

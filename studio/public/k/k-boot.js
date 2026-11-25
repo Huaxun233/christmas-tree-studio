@@ -2,6 +2,7 @@
 // 通过 window.__K_BOOT_READY 把分享数据喂给主模块的 BOOT_CONFIG
 (function () {
   var P = new URLSearchParams(location.search);
+  window.HANABI_MODE = "appreciation"; // 分享/预览页一律欣赏模式（自动渲染粒子树）
   var base = { standalone: true, sharedDeveloper: true, draftKey: "hanabi-friend-developer-draft-v1", colorKey: "hanabi-friend-color-v1", legacyColorKey: "" };
 
   if (P.get("preview") === "1") {
@@ -28,7 +29,7 @@
     var c = Object.assign({}, base);
     if (title) c.message = title;
     if (photos && photos.length) {
-      c.photos = photos.slice(0, 12).map(function (p) { return { src: p.url }; });
+      c.photos = photos.slice(0, 12).map(function (p) { return { src: p.dataUrl || p.url }; });
     }
     return c;
   }

@@ -13,7 +13,13 @@
       .then(function (d) { return { title: d.title || "", photos: (d.photos || []).map(function (p) { return p.url; }) }; })
       .catch(function () { return { photos: [] }; });
   } else if (PREVIEW) {
-    window.__M_BOOT = Promise.resolve({ photos: [] });
+    try {
+      var raw = sessionStorage.getItem("studio_preview_m");
+      var cfg = raw ? JSON.parse(raw) : {};
+      window.__M_BOOT = Promise.resolve({ title: cfg.title !== undefined ? cfg.title : "", photos: (cfg.photos || []).map(function (p) { return p.dataUrl || p.url; }) });
+    } catch (e) {
+      window.__M_BOOT = Promise.resolve({ photos: [] });
+    }
   }
 
   function onReady(fn) {

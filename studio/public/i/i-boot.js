@@ -5,7 +5,7 @@
   if (P.get("preview") === "1") {
     try {
       var raw = sessionStorage.getItem("studio_preview_i");
-      if (raw) { var cfg = JSON.parse(raw); applyTitle(cfg.title); loadPhotos(cfg.photos || []); }
+      if (raw) { var cfg = JSON.parse(raw); applyTitle(cfg.title); loadPhotos((cfg.photos || []).map(function (p) { return p.dataUrl || p.url; })); }
     } catch (e) {}
     return;
   }
@@ -37,7 +37,7 @@
           var cv = document.createElement("canvas");
           cv.width = im.naturalWidth; cv.height = im.naturalHeight;
           cv.getContext("2d").drawImage(im, 0, 0);
-          addPhotoCanvas(cv, cv.height / cv.width);
+          addPhotoCanvas(cv, im.naturalWidth, im.naturalHeight);
         };
         im.src = u;
       });

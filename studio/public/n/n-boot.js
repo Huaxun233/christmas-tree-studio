@@ -19,15 +19,21 @@
       .catch(function () {})
       .finally(function () { globalThis.__N_BOOT_READY = true; });
   } else {
-    // 预览/直接访问：去掉外网 picsum 占位图，保持干净
     globalThis.__N_BOOT_READY = true;
-    if (PREVIEW) globalThis.__N_TITLE = "";
+    if (PREVIEW) {
+      try {
+        var raw = sessionStorage.getItem("studio_preview_n");
+        var cfg = raw ? JSON.parse(raw) : {};
+        PHOTOS = (cfg.photos || []).map(function (p, i) { return { id: String(i + 1), src: p.dataUrl || p.url, caption: p.name || ("照片 " + (i + 1)) }; });
+        globalThis.__N_TITLE = cfg.title !== undefined ? cfg.title : "";
+      } catch (e) { globalThis.__N_TITLE = ""; }
+    }
   }
 
   // 拦截 data.json：分享页用注入照片，预览用空
   var _fetch = window.fetch;
   window.fetch = function (url) {
-    if (typeof url === "string" && url.indexOf("data.json") !== -1 && globalThis.__N_BOOT_READY) {
+    if (typeof url === "string" && url.indexOf("data.json") !== -1) {
       if (PHOTOS.length) {
         return Promise.resolve(new Response(JSON.stringify({ photos: PHOTOS }), { headers: { "Content-Type": "application/json" } }));
       }
