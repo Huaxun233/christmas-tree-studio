@@ -58,7 +58,7 @@ const particles = new ParticleTree(scene, COUNTS.tree);
 const tree = new ChristmasTree(scene);
 /* 默认挂载 assets/photos/ 下的本地照片（photo-01~12.jpg，加载失败自动回退占位卡） */
 const DEFAULT_PHOTOS = Array.from({ length: 12 },
-  (_, i) => `./assets/photos/photo-${String(i + 1).padStart(2, '0')}.jpg`);
+  (_, i) => `./07-assets/assets/photos/photo-${String(i + 1).padStart(2, '0')}.jpg`);
 const photos = new PhotoCards(scene, camera, DEFAULT_PHOTOS);
 const snow = new Snow(scene, COUNTS.snow);
 const stars = new Starfield(scene, COUNTS.stars);
@@ -147,7 +147,7 @@ const btnMusic = document.getElementById('btn-music');
 music.onError = (msg) => showToast(msg);
 /* 内置默认曲目：《Last Christmas》(Wham!) —— 项目内本地文件，
    点「♪ 音乐」按钮即播放；加载失败自动回退八音盒合成旋律 */
-music.loadUrl('./assets/audio/last-christmas.mp3');
+music.loadUrl('./07-assets/assets/audio/last-christmas.mp3');
 controls.bindUI({
   onToggleBloom: (bloomed) => {
     if (bloomed) { particles.bloom(); tree.fold(true); photos.setExplode(true); showToast('粒子绽放 · 化作粉色星云'); }
@@ -181,7 +181,7 @@ musicInput.addEventListener('change', async () => {
 
 /* 上传照片（multiple）：浏览器本地读取，绝不联网 */
 fileInput.addEventListener('change', () => {
-  const files = fileInput.files;
+  const files = Array.from(fileInput.files);  // 先拷贝：清 value 会连带清空 FileList
   fileInput.value = '';
   if (!files || !files.length) return;
   const n = photos.addFiles(files);

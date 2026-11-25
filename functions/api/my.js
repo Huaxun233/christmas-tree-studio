@@ -11,7 +11,7 @@ import { json, tokenHash } from "../lib/http.js";
 const UNDO_MS = 3 * 60 * 1000; // 3 分钟内可撤销
 
 // 树类型 → KV 前缀（a=经典 tree/，b=璀璨 btree/，c=记忆漩涡 ctree/，d=手势 dtree/，f=星光 ftree/，g=空间 gtree/，h=黑金 htree/）
-const PREFIX_BY_TYPE = { a: "tree/", b: "btree/", c: "ctree/", d: "dtree/", f: "ftree/", g: "gtree/", h: "htree/", i: "itree/", j: "jtree/", k: "ktree/", l: "ltree/", m: "mtree/" };
+const PREFIX_BY_TYPE = { a: "tree/", b: "btree/", c: "ctree/", d: "dtree/", f: "ftree/", g: "gtree/", h: "htree/", i: "itree/", j: "jtree/", k: "ktree/", l: "ltree/", m: "mtree/", n: "ntree/" };
 const prefixOf = it => PREFIX_BY_TYPE[it.type] || "tree/";
 
 async function handle(context, req) {

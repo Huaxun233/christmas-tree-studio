@@ -248,7 +248,7 @@
     } else {
       var open = document.createElement("a");
       open.className = "mini";
-      var openPrefix = { a: "/tree/", b: "/b/", c: "/c/", d: "/d/", f: "/f/", g: "/g/", h: "/h/", i: "/i/", j: "/j/", k: "/k/", l: "/l/", m: "/m/" }[tree.type] || "/tree/";
+      var openPrefix = { a: "/tree/", b: "/b/", c: "/c/", d: "/d/", f: "/f/", g: "/g/", h: "/h/", i: "/i/", j: "/j/", k: "/k/", l: "/l/", m: "/m/", n: "/n/" }[tree.type] || "/tree/";
       open.href = openPrefix + "?id=" + encodeURIComponent(tree.id);
       open.target = "_blank"; open.rel = "noopener"; open.textContent = "打开";
       var del = document.createElement("button");

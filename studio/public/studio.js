@@ -64,7 +64,7 @@
     var isB = treeType === "b";
     var isC = treeType === "c";
     var isD = treeType === "d";
-    var isFG = ["f","g","h","i","j","k","l","m"].indexOf(treeType) !== -1;
+    var isFG = ["f","g","h","i","j","k","l","m","n"].indexOf(treeType) !== -1;
     if (advArea) advArea.style.display = (isB || isFG) ? "none" : "block";
     var bTextArea = $("b-text-area");
     if (bTextArea) bTextArea.style.display = isB ? "block" : "none";
@@ -187,16 +187,16 @@
       var isD = treeType === "d";
       var isF = treeType === "f";
       var isG = treeType === "g";
-      var isH = treeType === "h"; var isI = treeType === "i"; var isJ = treeType === "j"; var isK = treeType === "k"; var isL = treeType === "l"; var isM = treeType === "m";
+      var isH = treeType === "h"; var isI = treeType === "i"; var isJ = treeType === "j"; var isK = treeType === "k"; var isL = treeType === "l"; var isM = treeType === "m"; var isN = treeType === "n";
       if (isB) cfg.custom = collectBCustom();
       if (isC || isD) {
         cfg.custom = { sub: (cdSubInput && cdSubInput.value.trim()) || "" };
         if (isD) cfg.photos = []; // D 型无照片
       }
       if (isF || isG || isH) cfg.custom = undefined; // F/G/H 无文字自定义，题字即横幅
-      var pkey = isB ? "studio_preview_b" : (isC ? "studio_preview_c" : (isD ? "studio_preview_d" : (isF ? "studio_preview_f" : (isG ? "studio_preview_g" : (isH ? "studio_preview_h" : (isI ? "studio_preview_i" : (isJ ? "studio_preview_j" : (isK ? "studio_preview_k" : (isL ? "studio_preview_l" : (isM ? "studio_preview_m" : "studio_preview"))))))))))
+      var pkey = isB ? "studio_preview_b" : (isC ? "studio_preview_c" : (isD ? "studio_preview_d" : (isF ? "studio_preview_f" : (isG ? "studio_preview_g" : (isH ? "studio_preview_h" : (isI ? "studio_preview_i" : (isJ ? "studio_preview_j" : (isK ? "studio_preview_k" : (isL ? "studio_preview_l" : (isM ? "studio_preview_m" : (isN ? "studio_preview_n" : "studio_preview")))))))))))
       try { sessionStorage.setItem(pkey, JSON.stringify(cfg)); } catch (e) {}
-      var pdir = isB ? "b" : (isC ? "c" : (isD ? "d" : (isF ? "f" : (isG ? "g" : (isH ? "h" : (isI ? "i" : (isJ ? "j" : (isK ? "k" : (isL ? "l" : (isM ? "m" : "tree"))))))))));
+      var pdir = isB ? "b" : (isC ? "c" : (isD ? "d" : (isF ? "f" : (isG ? "g" : (isH ? "h" : (isI ? "i" : (isJ ? "j" : (isK ? "k" : (isL ? "l" : (isM ? "m" : (isN ? "n" : "tree")))))))))));
       preview.src = "./" + pdir + "/?preview=1&t=" + Date.now();
     }, 400);
   }
@@ -233,8 +233,8 @@
       var isD = treeType === "d";
       var isF = treeType === "f";
       var isG = treeType === "g";
-      var isH = treeType === "h"; var isI = treeType === "i"; var isJ = treeType === "j"; var isK = treeType === "k"; var isL = treeType === "l"; var isM = treeType === "m";
-      var api = isB ? "/api/create-b" : (isC ? "/api/create-c" : (isD ? "/api/create-d" : (isF ? "/api/create-f" : (isG ? "/api/create-g" : (isH ? "/api/create-h" : (isI ? "/api/create-i" : (isJ ? "/api/create-j" : (isK ? "/api/create-k" : (isL ? "/api/create-l" : (isM ? "/api/create-m" : "/api/create"))))))))));
+      var isH = treeType === "h"; var isI = treeType === "i"; var isJ = treeType === "j"; var isK = treeType === "k"; var isL = treeType === "l"; var isM = treeType === "m"; var isN = treeType === "n";
+      var api = isB ? "/api/create-b" : (isC ? "/api/create-c" : (isD ? "/api/create-d" : (isF ? "/api/create-f" : (isG ? "/api/create-g" : (isH ? "/api/create-h" : (isI ? "/api/create-i" : (isJ ? "/api/create-j" : (isK ? "/api/create-k" : (isL ? "/api/create-l" : (isM ? "/api/create-m" : (isN ? "/api/create-n" : "/api/create")))))))))));
       var custom = isB ? collectBCustom() : ((isC || isD) ? { sub: (cdSubInput && cdSubInput.value.trim()) || "" } : (isF || isG || isH ? undefined : collectCustom()));
       var res = await fetch(api, {
         method: "POST",
@@ -245,7 +245,7 @@
       if (!res.ok) throw new Error(data.error || ("HTTP " + res.status));
       saveMyTree(data);
       var qr = qrDataUrl(data.url);
-      var typeLabel = isB ? "✨ 璀璨圣诞树" : (isC ? "🌌 记忆漩涡树" : (isD ? "🫱 手势圣诞树" : (isF ? "🌟 星光璀璨树" : (isG ? "🎁 圣诞树空间" : (isH ? "🖤 黑金粒子树" : (isI ? "🎄 HHk手势树" : (isJ ? "🔷 赛博粒子树" : (isK ? "🎆 花火圣诞树" : (isL ? "🏝 星屿圣诞树" : (isM ? "🔮 魔法手势树" : "🎄 经典圣诞树"))))))))));
+      var typeLabel = isB ? "✨ 璀璨圣诞树" : (isC ? "🌌 记忆漩涡树" : (isD ? "🫱 手势圣诞树" : (isF ? "🌟 星光璀璨树" : (isG ? "🎁 圣诞树空间" : (isH ? "🖤 黑金粒子树" : (isI ? "🎄 HHk手势树" : (isJ ? "🔷 赛博粒子树" : (isK ? "🎆 花火圣诞树" : (isL ? "🏝 星屿圣诞树" : (isM ? "🔮 魔法手势树" : (isN ? "🎄 手势3D圣诞树" : "🎄 经典圣诞树")))))))))));
       resultBox.innerHTML =
         typeLabel + " 生成成功！永久链接：<br><a href=\"" + data.url + "\" target=\"_blank\" rel=\"noopener\">" + data.url + "</a><br>" +
         "<span style=\"color:var(--dim);font-size:12px\">点开即可玩，分享给朋友也用这条链接；长按二维码可保存/识别</span><br>" +
